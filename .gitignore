@@ -1,1 +1,36 @@
-/target
+# Cosas de rust y Cargo
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+.cargo/
+
+# IDE o editores
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage reports
+coverage.xml
+*.profraw
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
