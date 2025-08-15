@@ -195,7 +195,7 @@ impl Lexer {
             Ok(Some(self.input.chars().nth(self.position + 1).unwrap()))
         }
     }
-
+ 
     fn advance(&mut self) {
         if self.position < self.input.chars().count() {
             self.position += 1;
