@@ -24,6 +24,10 @@ variables:
 test:
   stage: test
   image: rust:1.89.0-slim
+  tags:
+    - rust
+    - docker
+    - linux
   before_script:
     - rustc --version
     - cargo --version
@@ -48,6 +52,11 @@ test:
 build:
   stage: build
   image: rust:1.89.0-slim
+  tags:
+    - rust
+    - docker
+    - linux
+    - build
   before_script:
     - rustc --version
     - cargo --version
@@ -66,6 +75,11 @@ build:
 quality:
   stage: quality
   image: rust:1.89.0-slim
+  tags:
+    - rust
+    - docker
+    - linux
+    - quality
   before_script:
     - rustc --version
     - cargo --version
