@@ -27,7 +27,6 @@ test:
   tags:
     - rust
     - docker
-    - linux
   before_script:
     - rustc --version
     - cargo --version
@@ -55,8 +54,6 @@ build:
   tags:
     - rust
     - docker
-    - linux
-    - build
   before_script:
     - rustc --version
     - cargo --version
@@ -78,8 +75,6 @@ quality:
   tags:
     - rust
     - docker
-    - linux
-    - quality
   before_script:
     - rustc --version
     - cargo --version
