@@ -1,120 +1,52 @@
-integer-literal ::= [-] (0 . . . 9) {0 . . . 9 | _}
-| [-] (0x | 0X) (0 . . . 9 | A . . . F | a . . . f) {0 . . . 9 | A . . . F | a . . . f | _}
-| [-] (0o | 0O) (0 . . . 7) {0 . . . 7 | _}
-| [-] (0b | 0B) (0 . . . 1) {0 . . . 1 | _}
+NL ::= newline
+whitespace ::= " " | "\t" | NL
 
-int32-literal ::= integer-literal l
-int64-literal ::= integer-literal L
+decimal_digit ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
+integer_literal ::= [-] decimal_digit {decimal_digit | _}
+boolean_literal ::= "true" | "false"
+
+lowercase_letter ::= a-z
+    | U+00DF - U+00F6
+    | U+00F8 - U+00FF
+    | U+0153 - U+0161
+    | U+017E
+
+uppercase_letter ::= A-Z
+    | U+00C0 - U+00D6
+    | U+00D8 - U+00DE
+    | U+0152 - U+0160
+    | U+017D - U+0178
+    | U+1E9E
+
+letter	::=	uppercase_letter
+    | lowercase_letter
  
-lowercase-letter	::=	a…z  ∣ U+00DF … U+00F6 ∣ U+00F8 … U+00FF ∣ U+0153 ∣ U+0161 ∣ U+017E  
+symbol_char ::= "!" | "$" | "%" | "&" | "*" | "+" | "-" | "/" | ":" | "<" | "=" | ">" | "?" | "@" | "\\" | "^" | "|" | "~"
  
-uppercase-letter	::=	A…Z ∣ U+00C0 … U+00D6 ∣ U+00D8 … U+00DE  ∣ U+0152 ∣ U+0160 ∣ U+017D ∣ U+0178 ∣ U+1E9E
-letter	::=	 uppercase-letter ∣ lowercase-letter 
+identifier	::=	( letter | "_" | symbol_char ) { letter | decimal_digit | "_" | symbol_char }
 
-ident	::=	 (letter ∣ _) { letter ∣ 0…9 ∣ _ ∣ ' } 
- 
-capitalized-ident	::=	 uppercase-letter { letter ∣ 0…9 ∣ _ ∣ ' } 
- 
-lowercase-ident	::=	(lowercase-letter ∣ _) { letter ∣ 0…9 ∣ _ ∣ ' } 
- 
-float-literal	::=	[-] (0…9) { 0…9 ∣ _ } [. { 0…9 ∣ _ }] [(e ∣ E) [+ ∣ -] (0…9) { 0…9 ∣ _ }]
- 	∣	 [-] (0x ∣ 0X) (0…9 ∣ A…F ∣ a…f) { 0…9 ∣ A…F ∣ a…f ∣ _ }  [. { 0…9 ∣ A…F ∣ a…f ∣ _ }] [(p ∣ P) [+ ∣ -] (0…9) { 0…9 ∣ _ }] 
+reserved_word ::= "decl" | "while" | "match" | "with" | "done" | "in" | "do"
+    // Los siguientes no son palabras reservadas, pero se usan como funciones "built-in",
+    // por facilidad los definimos como palabras reservadas
+    | "print" | "<" | ">" | "==" | "!=" | "+" | "-" | "*" | "=" | "()"
 
-program ::= { form [NL+] }
+void ::= "()"
 
-form ::= declaration
-       | expression
+literal ::= integer_literal | boolean_literal | void
 
-declaration ::= "decl" [ "rec" ] identifier { parameter } "=" body
+expression ::= literal
+    | identifier
+    | "(" expression ")"
+    | expression { expression } // Aplicación de funciones
+    | expression { ";" expression } // Secuencia de expresiones, se ignora el primer valor
+    | { declaration "in" } expression  // Declaraciones cuyo scope es la expresión
+    | "while" expression "do" expression "done" // Ciclo while
+    | "match" expression "with"  "|" literal "->" expression { "|" literal "->" expression }  // Match
+
+program ::= { ";" } ( declaration | expression ) { { ";" } ( declaration | ";" expression ) } { ";" } 
+
+declaration ::= "decl" identifier { parameter } "=" expression
+    | identifier "=" expression
 
 parameter ::= identifier
-
-body ::= expression
-      | NL+ block
-
-block ::= form { NL+ form }
-
-expression ::= if_expression
-             | application
-
-if_expression ::= "if" expression "then" expression "else" expression
-
-application ::= postfix { postfix }   /* function application by whitespace */
-
-postfix ::= primary { indexer }
-
-primary ::= literal
-          | identifier
-          | "(" expression ")"
-          | array_dimensions
-
-indexer ::= "[" expression { "," expression } "]"
-
-array_dimensions ::= "[" range { "," range } "]"
-range ::= expression ".." expression
-
-literal ::= integer_literal
-          | int32_literal
-          | int64_literal
-          | float_literal
-          | string_literal
-
-/* identifiers (both word and symbolic; operators are identifiers) */
-identifier ::= word_ident | symbol_ident
-
-/* word identifiers */
-word_ident ::= ident
-
-/* symbolic identifiers (operators as identifiers); "/*" and "*/" are reserved and not allowed */
-symbol_ident ::= symbol_char { symbol_char }
-symbol_char ::= "!" | "$" | "%" | "&" | "*" | "+" | "-" | "/" | ":" | "<" | "=" | ">" | "?" | "@" | "\\" | "^" | "|" | "~"
-
-/* reserved keywords (cannot be used as identifiers) */
-reserved_word ::= "decl" | "rec" | "if" | "then" | "else"
-
-/* literals (numbers as provided) */
-integer_literal ::= [ "-" ] digit { digit | "_" }
-                  | [ "-" ] ( "0x" | "0X" ) hex_digit { hex_digit | "_" }
-                  | [ "-" ] ( "0o" | "0O" ) oct_digit { oct_digit | "_" }
-                  | [ "-" ] ( "0b" | "0B" ) bin_digit { bin_digit | "_" }
-
-int32_literal ::= integer_literal "l"
-int64_literal ::= integer_literal "L"
-
-float_literal ::= [ "-" ] digit { digit | "_" } [ "." { digit | "_" } ] [ ( "e" | "E" ) [ "+" | "-" ] digit { digit | "_" } ]
-                | [ "-" ] ( "0x" | "0X" ) hex_digit { hex_digit | "_" } [ "." { hex_digit | "_" } ] [ ( "p" | "P" ) [ "+" | "-" ] digit { digit | "_" } ]
-
-string_literal ::= "\"" { string_char } "\""
-string_char ::= any_char_except_quote_backslash_newline | escape_sequence
-escape_sequence ::= "\\" ( "\"" | "\\" | "n" | "r" | "t" | "u" hex_digit hex_digit hex_digit hex_digit )
-
-/* letters and idents (as provided) */
-letter ::= uppercase_letter | lowercase_letter
-lowercase_letter ::= "a"… "z" | U+00DF … U+00F6 | U+00F8 … U+00FF | U+0153 | U+0161 | U+017E
-uppercase_letter ::= "A"… "Z" | U+00C0 … U+00D6 | U+00D8 … U+00DE | U+0152 | U+0160 | U+017D | U+0178 | U+1E9E
-
-ident ::= ( letter | "_" ) { letter | digit | "_" | "'" }
-capitalized_ident ::= uppercase_letter { letter | digit | "_" | "'" }
-lowercase_ident ::= ( lowercase_letter | "_" ) { letter | digit | "_" | "'" }
-
-/* lexical tokens */
-digit ::= "0"… "9"
-hex_digit ::= digit | "A"… "F" | "a"… "f"
-oct_digit ::= "0"… "7"
-bin_digit ::= "0" | "1"
-
-NL ::= newline
-
-/* whitespace and comments (ignored between tokens) */
-whitespace ::= " " | "\t" | NL
-comment ::= "/*" comment_body "*/"
-comment_body ::= { comment | not_comment_delimiter_char }   /* nested comments allowed; "/*" and "*/" are reserved */
-not_comment_delimiter_char ::= any_char_except_asterisk_slash_start_end
-
-/* scanning rules summary
-   - Tokens are separated by whitespace and/or comments.
-   - reserved_word cannot be used where identifier is expected.
-   - symbol_ident must not equal "/*" or "*/".
-   - "." participates in numeric literals and the ".." range; it is not part of symbol_ident.
-*/

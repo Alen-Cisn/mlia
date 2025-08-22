@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     IntegerLiteral(i64),
@@ -15,6 +17,16 @@ pub enum Token {
 // position es la posición actual del cursor, los anteriores ya fueron leidos.
 // line va aumentando a medida que se leen saltos de linea.
 // column va aumentando a medida que se leen caracteres y se resetea a 1 cuando se lee un salto de linea.
+
+pub enum State {
+    Start,
+    Digit,
+    LetterOrUnderscore,
+    Equals,
+    Minus,
+    Eof,
+}
+
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -195,7 +207,6 @@ impl Lexer {
             Ok(Some(self.input.chars().nth(self.position + 1).unwrap()))
         }
     }
- 
     fn advance(&mut self) {
         if self.position < self.input.chars().count() {
             self.position += 1;

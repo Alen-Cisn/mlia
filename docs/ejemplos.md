@@ -1,21 +1,28 @@
 # Códigos de ejemplo de MLia
 
-```fsharp
-    decl entero = 20
+```
+    decl variable = 20
+    decl otraVariable = 30
+    decl miFunción arg1 arg2 =
+        + arg1 arg2
 
-    decl enteroCalculado = * entero 2 (* es igual a 40 *)
+    decl +función-con/símbolos!raros arg1 =
+        0
 
-    decl superFunction argumento1 argumento2 =
-        + argumento1 argumento2
 
-    decl miStringACapturar = "Esto es un texto"
+    while < variable otraVariable do
+        otraVariable = - otraVariable 1;
 
-    decl funcionConParametro"Vacio"YValorCapturado () =
-        print(miStringCapturado)
+        decl nuevoValor =
+            match otraVariable with
+            | 30 -> 
+                decl a = 2 in
+                miFunción a 3
+            | 20 -> 
+                2 in
 
-    decl miBooleano = true
+        print nuevoValor
+    done
 
-    decl funciónConArray tamaño =
-        decl numberList = [ 1 .. tamaño ] 
-
+    1
 ```
