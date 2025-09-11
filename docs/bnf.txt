@@ -3,8 +3,11 @@ whitespace ::= " " | "\t" | NL
 
 decimal_digit ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
-integer_literal ::= [-] decimal_digit {decimal_digit | _}
+integer_literal ::= decimal_digit {decimal_digit}
 boolean_literal ::= "true" | "false"
+
+// Comentarios (léxicos, pueden aparecer entre tokens y ser ignorados)
+comment ::= "(*" { any_char_except_comment_end | NL } "*)"
 
 lowercase_letter ::= a-z
     | U+00DF - U+00F6
@@ -29,11 +32,12 @@ identifier	::=	( letter | "_" | symbol_char ) { letter | decimal_digit | "_" | s
 reserved_word ::= "decl" | "while" | "match" | "with" | "done" | "in" | "do"
     // Los siguientes no son palabras reservadas, pero se usan como funciones "built-in",
     // por facilidad los definimos como palabras reservadas
-    | "print" | "<" | ">" | "==" | "!=" | "+" | "-" | "*" | "=" | "()"
+    | "print" | "<" | ">" | "!=" | "+" | "-" | "*" | "/" | "%" | "=" | "|" | "->" | "<-"
+    // por ahora no usamos void | "()"
 
-void ::= "()"
+// void ::= "()"
 
-literal ::= integer_literal | boolean_literal | void
+literal ::= integer_literal | boolean_literal //| void
 
 expression ::= literal
     | identifier
@@ -42,11 +46,11 @@ expression ::= literal
     | expression { ";" expression } // Secuencia de expresiones, se ignora el primer valor
     | { declaration "in" } expression  // Declaraciones cuyo scope es la expresión
     | "while" expression "do" expression "done" // Ciclo while
-    | "match" expression "with"  "|" literal "->" expression { "|" literal "->" expression }  // Match
+    | "match" expression "with"  "|" literal "->" expression { "|" literal "->" expression }  // Match sobre literales
 
-program ::= { ";" } ( declaration | expression ) { { ";" } ( declaration | ";" expression ) } { ";" } 
+program ::= { comment | ";" } ( declaration | expression ) { { comment | ";" } ( declaration | ";" expression ) } { comment | ";" }
 
-declaration ::= "decl" identifier { parameter } "=" expression
-    | identifier "=" expression
+declaration ::= "decl" identifier { parameter } "<-" expression
+    | identifier "<-" expression
 
 parameter ::= identifier
