@@ -12,7 +12,7 @@ pub enum Token {
     Assign,
     Arrow,
     Pipe,
-    // funciones built-in 
+    // funciones built-in
     Print,
     Equals,
     NotEquals,
@@ -24,7 +24,7 @@ pub enum Token {
     Slash,
     Percent,
 
-    // funciones built-in 
+    // funciones built-in
     Identifier(String),
     IntegerLiteral(i64),
     Semicolon,
@@ -40,17 +40,17 @@ pub enum Token {
 #[repr(usize)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum State {
-    Start = 0,                    // q0
-    Digit = 1,                    // q1
-    PipeOrIdentifier = 2,         // q2
-    AssignOrIdentifier = 3,       // q3
-    FinishAssignOrIdentifier = 4, // q4
-    Identifier = 5,               // q5
-    FinishArrowOrIdentifier = 6,  // q6
-    ArrowOrIdentifier = 7,        // q7
-    ParentesisOrComment = 8,      // q8
-    Comment = 9,                  // q9
-    MayFinishComment = 10,        // q10
+    Start = 0,                             // q0
+    Digit = 1,                             // q1
+    PipeOrIdentifier = 2,                  // q2
+    AssignOrIdentifier = 3,                // q3
+    FinishAssignOrIdentifier = 4,          // q4
+    Identifier = 5,                        // q5
+    FinishArrowOrIdentifier = 6,           // q6
+    ArrowOrIdentifierOrNegativeNumber = 7, // q7
+    ParentesisOrComment = 8,               // q8
+    Comment = 9,                           // q9
+    MayFinishComment = 10,                 // q10
 }
 
 impl State {
@@ -64,7 +64,7 @@ impl State {
             4 => Some(State::FinishAssignOrIdentifier),
             5 => Some(State::Identifier),
             6 => Some(State::FinishArrowOrIdentifier),
-            7 => Some(State::ArrowOrIdentifier),
+            7 => Some(State::ArrowOrIdentifierOrNegativeNumber),
             8 => Some(State::ParentesisOrComment),
             9 => Some(State::Comment),
             10 => Some(State::MayFinishComment),
@@ -135,9 +135,7 @@ pub const NUM_CLASSES: usize = CharClass::COUNT;
 // -1 means no valid transition from that state with that char class
 pub const STATE_TRANSITIONS: [[i8; NUM_CLASSES]; NUM_STATES] = [
     // q0 (Start)
-    [
-        1, 5, 3, 3, 7, 7, 5, 5, 5, 5, 5, 5, 5, 2, 2, 8, -1, 0, 0, -1,
-    ],
+    [1, 5, 3, 3, 7, 7, 5, 5, 5, 5, 5, 5, 5, 2, 2, 8, -1, 0, 0, -1],
     // q1 (Digit)
     [
         1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -164,7 +162,7 @@ pub const STATE_TRANSITIONS: [[i8; NUM_CLASSES]; NUM_STATES] = [
     ],
     // q7 (ArrowOrIdentifier)
     [
-        5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
+        1, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
     ],
     // q8 (ParentesisOrComment)
     [
@@ -195,7 +193,7 @@ lazy_static::lazy_static! {
             ("match", Token::Match),
             ("with", Token::With),
             ("in", Token::In),
-            // funciones built-in 
+            // funciones built-in
             ("print", Token::Print),
             ("<", Token::Less),
             (">", Token::Greater),
@@ -254,10 +252,10 @@ impl Lexer {
             let class = match classify_char(c) {
                 Some(cc) => cc,
                 None => {
-                return Err(format!(
+                    return Err(format!(
                         "Caracter inesperado '{}' en la línea {}, columna {}",
                         c, self.line, self.column
-                    ))
+                    ));
                 }
             };
 
@@ -309,13 +307,12 @@ impl Lexer {
         match state {
             State::Digit => {
                 // Integer literal
-                let parsed = self
-                    .current_lexeme
-                    .parse::<i64>()
-                    .map_err(|_| format!(
+                let parsed = self.current_lexeme.parse::<i64>().map_err(|_| {
+                    format!(
                         "Error al parsear el entero '{}' en la línea {}, columna {}",
                         self.current_lexeme, self.line, self.column
-                    ))?;
+                    )
+                })?;
                 self.tokens.push(Token::IntegerLiteral(parsed));
                 self.clear_lexeme();
                 Ok(())
@@ -325,11 +322,11 @@ impl Lexer {
             | State::FinishAssignOrIdentifier
             | State::Identifier
             | State::FinishArrowOrIdentifier
-            | State::ArrowOrIdentifier => {
+            | State::ArrowOrIdentifierOrNegativeNumber => {
                 // Identifier or keyword
                 if let Some(keyword_token) = KEYWORDS.get(self.current_lexeme.as_str()) {
                     self.tokens.push(keyword_token.clone());
-        } else {
+                } else {
                     self.tokens
                         .push(Token::Identifier(std::mem::take(&mut self.current_lexeme)));
                 }
@@ -364,7 +361,9 @@ fn action_emit_semicolon(lexer: &mut Lexer, _: Option<char>) {
 fn action_emit_equals(lexer: &mut Lexer, _: Option<char>) {
     lexer.tokens.push(Token::Equals);
 }
-fn action_emit_pipe(lexer: &mut Lexer, _: Option<char>) { lexer.tokens.push(Token::Pipe); }
+fn action_emit_pipe(lexer: &mut Lexer, _: Option<char>) {
+    lexer.tokens.push(Token::Pipe);
+}
 
 fn action_maybe_emit_assign(lexer: &mut Lexer, _: Option<char>) {
     if lexer.current_lexeme.as_str() == "<-" {
@@ -381,12 +380,16 @@ fn action_maybe_emit_arrow(lexer: &mut Lexer, _: Option<char>) {
 }
 
 fn action_append_and_maybe_emit_assign(lexer: &mut Lexer, ch: Option<char>) {
-    if let Some(c) = ch { lexer.append_char(c); }
+    if let Some(c) = ch {
+        lexer.append_char(c);
+    }
     action_maybe_emit_assign(lexer, None);
 }
 
 fn action_append_and_maybe_emit_arrow(lexer: &mut Lexer, ch: Option<char>) {
-    if let Some(c) = ch { lexer.append_char(c); }
+    if let Some(c) = ch {
+        lexer.append_char(c);
+    }
     action_maybe_emit_arrow(lexer, None);
 }
 
@@ -394,26 +397,26 @@ fn action_append_and_maybe_emit_arrow(lexer: &mut Lexer, ch: Option<char>) {
 pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
     // q0 (Start)
     [
-        action_start_lexeme, // Digit
-        action_start_lexeme, // LowerAlpha
-        action_start_lexeme, // UpperAlpha
-        action_start_lexeme, // < (may start identifier or <-)
-        action_start_lexeme, // >
-        action_start_lexeme, // - (may start integer or -> or identifier)
-        action_start_lexeme, // +
-        action_start_lexeme, // *
-        action_start_lexeme, // /
-        action_start_lexeme, // =
-        action_start_lexeme, // !
-        action_start_lexeme, // %
-        action_start_lexeme, // ^
-        action_start_lexeme, // _
-        action_start_lexeme, // | (may start identifier too)
-        action_noop,         // (
-        action_noop,         // )
+        action_start_lexeme,   // Digit
+        action_start_lexeme,   // LowerAlpha
+        action_start_lexeme,   // UpperAlpha
+        action_start_lexeme,   // < (may start identifier or <-)
+        action_start_lexeme,   // >
+        action_start_lexeme,   // - (may start integer or -> or identifier)
+        action_start_lexeme,   // +
+        action_start_lexeme,   // *
+        action_start_lexeme,   // /
+        action_start_lexeme,   // =
+        action_start_lexeme,   // !
+        action_start_lexeme,   // %
+        action_start_lexeme,   // ^
+        action_start_lexeme,   // _
+        action_start_lexeme,   // | (may start identifier too)
+        action_noop,           // (
+        action_noop,           // )
         action_emit_semicolon, // ;
-        action_noop,         // whitespace
-        action_noop,         // { } [ ] . :
+        action_noop,           // whitespace
+        action_noop,           // { } [ ] . :
     ],
     // q1 (Digit)
     [
@@ -463,26 +466,26 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
     ],
     // q3 (AssignOrIdentifier)
     [
-        action_append_lexeme,            // Digit
-        action_append_lexeme,            // LowerAlpha
-        action_append_lexeme,            // UpperAlpha
-        action_append_lexeme,            // <
+        action_append_lexeme,                // Digit
+        action_append_lexeme,                // LowerAlpha
+        action_append_lexeme,                // UpperAlpha
+        action_append_lexeme,                // <
         action_append_and_maybe_emit_assign, // > (complete <-)
-        action_append_lexeme,            // -
-        action_append_lexeme,            // +
-        action_append_lexeme,            // *
-        action_append_lexeme,            // /
-        action_append_lexeme,            // =
-        action_append_lexeme,            // !
-        action_append_lexeme,            // %
-        action_append_lexeme,            // ^
-        action_append_lexeme,            // _
-        action_noop,          // |
-        action_noop,          // (
-        action_noop,          // )
-        action_noop,          // ;
-        action_noop,          // whitespace
-        action_noop,          // punct group
+        action_append_lexeme,                // -
+        action_append_lexeme,                // +
+        action_append_lexeme,                // *
+        action_append_lexeme,                // /
+        action_append_lexeme,                // =
+        action_append_lexeme,                // !
+        action_append_lexeme,                // %
+        action_append_lexeme,                // ^
+        action_append_lexeme,                // _
+        action_noop,                         // |
+        action_noop,                         // (
+        action_noop,                         // )
+        action_noop,                         // ;
+        action_noop,                         // whitespace
+        action_noop,                         // punct group
     ],
     // q4 (FinishAssignOrIdentifier)
     [
@@ -555,26 +558,26 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
     ],
     // q7 (ArrowOrIdentifier)
     [
-        action_append_lexeme,              // Digit
-        action_append_lexeme,              // LowerAlpha
-        action_append_lexeme,              // UpperAlpha
-        action_append_lexeme,              // <
+        action_append_lexeme,               // Digit
+        action_append_lexeme,               // LowerAlpha
+        action_append_lexeme,               // UpperAlpha
+        action_append_lexeme,               // <
         action_append_and_maybe_emit_arrow, // > (complete ->)
-        action_append_lexeme,              // -
-        action_append_lexeme,              // +
-        action_append_lexeme,              // *
-        action_append_lexeme,              // /
-        action_append_lexeme,              // =
-        action_append_lexeme,              // !
-        action_append_lexeme,              // %
-        action_append_lexeme,              // ^
-        action_append_lexeme,              // _
-        action_noop,          // |
-        action_noop,          // (
-        action_noop,          // )
-        action_noop,          // ;
-        action_noop,          // whitespace
-        action_noop,          // punct group
+        action_append_lexeme,               // -
+        action_append_lexeme,               // +
+        action_append_lexeme,               // *
+        action_append_lexeme,               // /
+        action_append_lexeme,               // =
+        action_append_lexeme,               // !
+        action_append_lexeme,               // %
+        action_append_lexeme,               // ^
+        action_append_lexeme,               // _
+        action_noop,                        // |
+        action_noop,                        // (
+        action_noop,                        // )
+        action_noop,                        // ;
+        action_noop,                        // whitespace
+        action_noop,                        // punct group
     ],
     // q8 (ParentesisOrComment)
     [
@@ -867,7 +870,7 @@ mod tests {
             "El token 3 no es un entero: {:?}",
             tokens[3]
         );
-        
+
         assert_eq!(
             tokens[4],
             Token::Do,
@@ -881,7 +884,7 @@ mod tests {
             "El token 5 no es un print: {:?}",
             tokens[5]
         );
-        
+
         assert!(matches!(tokens[6], Token::Identifier(ref s) if s == "á"));
 
         assert_eq!(
@@ -904,7 +907,9 @@ mod tests {
         let _ = lines.next();
         let mut collected = String::new();
         for line in lines {
-            if line.trim_start().starts_with("```") { continue; }
+            if line.trim_start().starts_with("```") {
+                continue;
+            }
             collected.push_str(line);
             collected.push('\n');
         }
