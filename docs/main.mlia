@@ -1,30 +1,14 @@
 
-/*
-    La multiplicación está definida en la biblioteca algo como
-    decl * a b = ...
-*/
+(*
+Esto es un programa de ejemplo muy simple
+*)
 
-decl a = 2
+decl a <- 2 in
 
-decl b = 3.14
-decl a b = b /* this rewrites the declaration of a to a function that returns the parameter b */
+decl b <- 4 in
 
-/*
-    Un ejemplo de recursión:
-    /* es la función factorial /* y esto un comentario anidado */  */
-*/
+print a;
 
-decl rec funciónRecursiva x =
-    if <= x 0 then 1
-    /* función con tail call */
-    else * x funciónRecursiva (x - 1)
+print b
 
-decl función tamañoX tamañoY =
-    /* un array bidimensional en el stack */
-    decl miArray2D = [1 .. tamañoX, 1 .. tamañoY]
-    miArray[1,1]
-
-decl entero = (* (+ 1 2) 5) 
-
-print "hello world"
-:q
+1
