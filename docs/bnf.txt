@@ -1,12 +1,11 @@
-NL ::= newline
 whitespace ::= " " | "\t" | NL
 
 decimal_digit ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
-integer_literal ::= decimal_digit {decimal_digit}
-boolean_literal ::= "true" | "false"
+integer_literal ::= [-] decimal_digit {decimal_digit}
+# boolean_literal ::= "true" | "false"
 
-// Comentarios (léxicos, pueden aparecer entre tokens y ser ignorados)
+# Comentarios (léxicos, pueden aparecer entre tokens y ser ignorados)
 comment ::= "(*" { any_char_except_comment_end | NL } "*)"
 
 lowercase_letter ::= a-z
@@ -25,32 +24,33 @@ uppercase_letter ::= A-Z
 letter	::=	uppercase_letter
     | lowercase_letter
  
-symbol_char ::= "!" | "$" | "%" | "&" | "*" | "+" | "-" | "/" | ":" | "<" | "=" | ">" | "?" | "@" | "\\" | "^" | "|" | "~"
+symbol_char ::= "!" | "$" | "%" | "&" | "*" | "+" | "-" | "/"
+    | ":" | "<" | "=" | ">" | "?" | "@" | "\\" | "^" | "|" | "~"
  
 identifier	::=	( letter | "_" | symbol_char ) { letter | decimal_digit | "_" | symbol_char }
 
 reserved_word ::= "decl" | "while" | "match" | "with" | "done" | "in" | "do"
-    // Los siguientes no son palabras reservadas, pero se usan como funciones "built-in",
-    // por facilidad los definimos como palabras reservadas
+    # Los siguientes no son palabras reservadas, pero se usan como funciones "built-in",
+    # por facilidad los definimos como palabras reservadas
     | "print" | "<" | ">" | "!=" | "+" | "-" | "*" | "/" | "%" | "=" | "|" | "->" | "<-"
-    // por ahora no usamos void | "()"
 
-// void ::= "()"
-
-literal ::= integer_literal | boolean_literal //| void
+literal ::= integer_literal
 
 expression ::= literal
     | identifier
     | "(" expression ")"
-    | expression { expression } // Aplicación de funciones
-    | expression { ";" expression } // Secuencia de expresiones, se ignora el primer valor
-    | { declaration "in" } expression  // Declaraciones cuyo scope es la expresión
-    | "while" expression "do" expression "done" // Ciclo while
-    | "match" expression "with"  "|" literal "->" expression { "|" literal "->" expression }  // Match sobre literales
+    | expression { expression } # Aplicación de funciones
+    | expression comment # Aplicación de funciones
+    | expression { ";" expression } # Secuencia de expresiones, se ignora el primer valor
+    | identifier "<-" expression # Asignación a variable
+    | { declaration "in" } expression  # Declaraciones cuyo scope es la expresión
+    | "while" expression "do" expression "done" # Ciclo while
+    # Match sobre literales
+    | "match" expression "with"  "|" literal "->" expression { "|" literal "->" expression } 
 
-program ::= { comment | ";" } ( declaration | expression ) { { comment | ";" } ( declaration | ";" expression ) } { comment | ";" }
+
+program ::= [ comment ] expression
 
 declaration ::= "decl" identifier { parameter } "<-" expression
-    | identifier "<-" expression
 
 parameter ::= identifier

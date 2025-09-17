@@ -12,6 +12,8 @@ pub enum Token {
     Assign,
     Arrow,
     Pipe,
+    ParenL,
+    ParenR,
     // funciones built-in
     Print,
     Equals,
@@ -48,13 +50,14 @@ pub enum State {
     Identifier = 5,                        // q5
     FinishArrowOrIdentifier = 6,           // q6
     ArrowOrIdentifierOrNegativeNumber = 7, // q7
-    ParentesisOrComment = 8,               // q8
+    ParenLOrComment = 8,                   // q8
     Comment = 9,                           // q9
     MayFinishComment = 10,                 // q10
+    ParenR = 11,                           // q11
 }
 
 impl State {
-    pub const COUNT: usize = 11;
+    pub const COUNT: usize = 12;
     pub fn from_index(index: usize) -> Option<State> {
         match index {
             0 => Some(State::Start),
@@ -65,9 +68,10 @@ impl State {
             5 => Some(State::Identifier),
             6 => Some(State::FinishArrowOrIdentifier),
             7 => Some(State::ArrowOrIdentifierOrNegativeNumber),
-            8 => Some(State::ParentesisOrComment),
+            8 => Some(State::ParenLOrComment),
             9 => Some(State::Comment),
             10 => Some(State::MayFinishComment),
+            11 => Some(State::ParenR),
             _ => None,
         }
     }
@@ -135,7 +139,7 @@ pub const NUM_CLASSES: usize = CharClass::COUNT;
 // -1 means no valid transition from that state with that char class
 pub const STATE_TRANSITIONS: [[i8; NUM_CLASSES]; NUM_STATES] = [
     // q0 (Start)
-    [1, 5, 3, 3, 7, 7, 5, 5, 5, 5, 5, 5, 5, 2, 2, 8, -1, 0, 0, -1],
+    [1, 5, 3, 3, 7, 7, 5, 5, 5, 5, 5, 5, 5, 2, 2, 8, 11, 0, 0, -1],
     // q1 (Digit)
     [
         1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -164,7 +168,7 @@ pub const STATE_TRANSITIONS: [[i8; NUM_CLASSES]; NUM_STATES] = [
     [
         1, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
     ],
-    // q8 (ParentesisOrComment)
+    // q8 (ParenLOrComment)
     [
         -1, -1, -1, -1, -1, -1, -1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     ],
@@ -172,6 +176,10 @@ pub const STATE_TRANSITIONS: [[i8; NUM_CLASSES]; NUM_STATES] = [
     [9, 9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, -1],
     // q10 (MayFinishComment)
     [9, 9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9, 9, 9, 9, 0, 9, 9, -1],
+    // q11 (ParenR)
+    [
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    ],
 ];
 
 pub fn next_state(current: State, class: CharClass) -> Option<State> {
@@ -357,12 +365,12 @@ fn action_append_lexeme(lexer: &mut Lexer, ch: Option<char>) {
 }
 fn action_emit_semicolon(lexer: &mut Lexer, _: Option<char>) {
     lexer.tokens.push(Token::Semicolon);
+    lexer.clear_lexeme();
 }
-fn action_emit_equals(lexer: &mut Lexer, _: Option<char>) {
-    lexer.tokens.push(Token::Equals);
-}
+
 fn action_emit_pipe(lexer: &mut Lexer, _: Option<char>) {
     lexer.tokens.push(Token::Pipe);
+    lexer.clear_lexeme();
 }
 
 fn action_maybe_emit_assign(lexer: &mut Lexer, _: Option<char>) {
@@ -393,6 +401,16 @@ fn action_append_and_maybe_emit_arrow(lexer: &mut Lexer, ch: Option<char>) {
     action_maybe_emit_arrow(lexer, None);
 }
 
+fn action_emit_parentesis_l(lexer: &mut Lexer, _: Option<char>) {
+    lexer.tokens.push(Token::ParenL);
+    lexer.clear_lexeme();
+}
+
+fn action_emit_parentesis_r(lexer: &mut Lexer, _: Option<char>) {
+    lexer.tokens.push(Token::ParenR);
+    lexer.clear_lexeme();
+}
+
 // Transition actions per [State][CharClass]
 pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
     // q0 (Start)
@@ -411,7 +429,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_start_lexeme,   // %
         action_start_lexeme,   // ^
         action_start_lexeme,   // _
-        action_start_lexeme,   // | (may start identifier too)
+        action_start_lexeme,   // | (  start identifier too)
         action_noop,           // (
         action_noop,           // )
         action_emit_semicolon, // ;
@@ -457,7 +475,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_append_lexeme, // %
         action_append_lexeme, // ^
         action_append_lexeme, // _
-        action_noop,          // |
+        action_emit_pipe,     // |
         action_noop,          // (
         action_noop,          // )
         action_noop,          // ;
@@ -579,28 +597,28 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,                        // whitespace
         action_noop,                        // punct group
     ],
-    // q8 (ParentesisOrComment)
+    // q8 (ParenLOrComment)
     [
-        action_noop, // Digit
-        action_noop, // LowerAlpha
-        action_noop, // UpperAlpha
-        action_noop, // <
-        action_noop, // >
-        action_noop, // -
-        action_noop, // +
-        action_noop, // *
-        action_noop, // /
-        action_noop, // =
-        action_noop, // !
-        action_noop, // %
-        action_noop, // ^
-        action_noop, // _
-        action_noop, // |
-        action_noop, // (
-        action_noop, // )
-        action_noop, // ;
-        action_noop, // whitespace
-        action_noop, // punct group
+        action_emit_parentesis_l, // Digit
+        action_emit_parentesis_l, // LowerAlpha
+        action_emit_parentesis_l, // UpperAlpha
+        action_emit_parentesis_l, // <
+        action_emit_parentesis_l, // >
+        action_emit_parentesis_l, // -
+        action_emit_parentesis_l, // +
+        action_noop,              // *
+        action_emit_parentesis_l, // /
+        action_emit_parentesis_l, // =
+        action_emit_parentesis_l, // !
+        action_emit_parentesis_l, // %
+        action_emit_parentesis_l, // ^
+        action_emit_parentesis_l, // _
+        action_emit_parentesis_l, // |
+        action_emit_parentesis_l, // (
+        action_emit_parentesis_l, // )
+        action_emit_parentesis_l, // ;
+        action_emit_parentesis_l, // whitespace
+        action_emit_parentesis_l, // punct group
     ],
     // q9 (Comment)
     [
@@ -647,6 +665,29 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop, // ;
         action_noop, // whitespace
         action_noop, // punct group
+    ],
+    // q11 (ParenR)
+    [
+        action_emit_parentesis_r, // Digit
+        action_emit_parentesis_r, // LowerAlpha
+        action_emit_parentesis_r, // UpperAlpha
+        action_emit_parentesis_r, // <
+        action_emit_parentesis_r, // >
+        action_emit_parentesis_r, // -
+        action_emit_parentesis_r, // +
+        action_emit_parentesis_r, // *
+        action_emit_parentesis_r, // /
+        action_emit_parentesis_r, // =
+        action_emit_parentesis_r, // !
+        action_emit_parentesis_r, // %
+        action_emit_parentesis_r, // ^
+        action_emit_parentesis_r, // _
+        action_emit_parentesis_r, // |
+        action_emit_parentesis_r, // (
+        action_emit_parentesis_r, // )
+        action_emit_parentesis_r, // ;
+        action_emit_parentesis_r, // whitespace
+        action_emit_parentesis_r, // punct group
     ],
 ];
 
