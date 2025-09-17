@@ -36,12 +36,12 @@ fn main() -> Result<(), String> {
     // println!("Tokens: {:?}\n", tokens);
 
     // Example 5: Complex expression with whitespace 
-    println!("Example 5: Complex expression with whitespace");
-    let input = " decl   variable_name   <- match a with | 3 -> ( -999 ) (**)";
-    println!("Input: '{}'", input);
-    let mut lexer = Lexer::new(input.to_string());
-    let tokens = lexer.tokenize()?;
-    println!("Tokens: {:?}\n", tokens);
+    // println!("Example 5: Complex expression with whitespace");
+    // let input = " decl   variable_name   <- match a with | 3 -> ( -999 ) (**)";
+    // println!("Input: '{}'", input);
+    // let mut lexer = Lexer::new(input.to_string());
+    // let tokens = lexer.tokenize()?;
+    // println!("Tokens: {:?}\n", tokens);
 
     // // Example 6: Multiple statements
     // println!("Example 6: Multiple statements");
@@ -49,6 +49,35 @@ fn main() -> Result<(), String> {
     // let mut lexer = Lexer::new("decl a <- 1 ; decl b <- 2".to_string());
     // let tokens = lexer.tokenize()?;
     // println!("Tokens: {:?}\n", tokens);
+
+    
+    // Example 7: Full program
+    println!("Example 7: Full program");
+    // Valid example
+    let src = include_str!("../docs/ejemplos.md");
+
+    // Invalid example: invalid symbols
+    //let src = include_str!("../docs/ejemploInv.md");
+    // Strip the markdown code fences and header
+    let mut lines = src.lines();
+    // skip title
+    let _ = lines.next();
+    let mut collected = String::new();
+    for line in lines {
+        if line.trim_start().starts_with("```") {
+            continue;
+        }
+        collected.push_str(line);
+        collected.push('\n');
+    }
+    println!("Input: '{}'", collected);
+    let mut lexer = Lexer::new(collected);
+    let tokens = lexer.tokenize()?;
+    println!("Tokens:");
+
+    for token in &tokens {
+        println!("{:?}", token);
+    }
 
     Ok(())
 }
