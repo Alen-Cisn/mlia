@@ -43,41 +43,56 @@ fn main() -> Result<(), String> {
     // let tokens = lexer.tokenize()?;
     // println!("Tokens: {:?}\n", tokens);
 
-    // // Example 6: Multiple statements
+    // Example 6: Multiple statements
     // println!("Example 6: Multiple statements");
-    // println!("Input: 'decl a <- 1 ; decl b <- 2'");
-    // let mut lexer = Lexer::new("decl a <- 1 ; decl b <- 2".to_string());
+    // let input6 = " decl a10 <- 1 in decl -a11 <- -2 in decl b <- a10 ";
+    // println!("Input: '{}'", input6);
+    // let mut lexer = Lexer::new(input6.to_string());
     // let tokens = lexer.tokenize()?;
     // println!("Tokens: {:?}\n", tokens);
 
+    // println!("Example 8: error starting with number followed by letters");
+    // let input8 = " 10a ";
+    // println!("Input: '{}'", input8);
+    // let mut lexer = Lexer::new(input8.to_string());
+    // let tokens = lexer.tokenize()?;
+    // println!("Tokens: {:?}\n", tokens);
+
+    println!("Example 9: error starting with negative number followed by letters");
+    let input9 = "|| () ;";
+    println!("Input: '{}'", input9);
+    let mut lexer = Lexer::new(input9.to_string());
+    let tokens = lexer.tokenize()?;
+    println!("Tokens: {:?}\n", tokens);
+
     
     // Example 7: Full program
-    println!("Example 7: Full program");
-    // Valid example
-    let src = include_str!("../docs/ejemplos.md");
+    // println!("Example 7: Full program");
+    // // Valid example
+    // let src = include_str!("../docs/ejemplos.md");
 
-    // Invalid example: invalid symbols
-    //let src = include_str!("../docs/ejemploInv.md");
-    // Strip the markdown code fences and header
-    let mut lines = src.lines();
-    // skip title
-    let _ = lines.next();
-    let mut collected = String::new();
-    for line in lines {
-        if line.trim_start().starts_with("```") {
-            continue;
-        }
-        collected.push_str(line);
-        collected.push('\n');
-    }
-    println!("Input: '{}'", collected);
-    let mut lexer = Lexer::new(collected);
-    let tokens = lexer.tokenize()?;
-    println!("Tokens:");
+    // // Invalid example: invalid symbols
+    // //let src = include_str!("../docs/ejemploInv.md");
+    // // Strip the markdown code fences and header
+    // let mut lines = src.lines();
+    // // skip title
+    // let _ = lines.next();
+    // let mut collected = String::new();
+    // for line in lines {
+    //     if line.trim_start().starts_with("```") {
+    //         continue;
+    //     }
+    //     collected.push_str(line);
+    //     collected.push('\n');
+    // }
+    // println!("Input: '{}'", collected);
+    // let mut lexer = Lexer::new(collected);
+    // let tokens = lexer.tokenize()?;
+    // println!("Tokens:");
 
-    for token in &tokens {
-        println!("{:?}", token);
-    }
+    // for token in &tokens {
+    //     println!("{:?}", token);
+    // }
 
     Ok(())
 }
