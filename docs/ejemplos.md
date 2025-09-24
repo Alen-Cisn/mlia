@@ -10,9 +10,9 @@ Comentario
 *)
 decl +función-con/símbolos!raros arg1 <- 0 in
 
-
+ 
 while < variable otraVariable do
-	otraVariable <- - otraVariable 1 in;
+	otraVariable <- - otraVariable 1;
 	
     decl nuevoValor <-
 		match otraVariable with
