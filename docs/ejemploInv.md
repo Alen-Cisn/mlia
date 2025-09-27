@@ -1,9 +1,9 @@
 # Códigos de ejemplo de MLia
 
 ```
-decl variable <- 20 in
-decl otraVariable <- 30 in
-decl miFunción arg1 arg2 <-
+dec var😃 <- 20 in
+decl var2 <- 30 in
+decl func^@\/!-ion arg1 arg2 <-
 	+ arg1 arg2 in
 (*
 Comentario
@@ -11,10 +11,10 @@ Comentario
 decl +función-con/símbolos!raros arg1 <- 0 in
 
 
-while < variable otraVariable do
+whle < variable otraVariable do
 	otraVariable <- - otraVariable 1 in;
 	
-    decl nuevoValor <-
+    decl 你好 <-
 		match otraVariable with
 	    	| 30 -> 
 	    		decl a <- 2 in

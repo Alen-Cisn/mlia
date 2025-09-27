@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 (*
 Esto es un programa de ejemplo muy simple
 *)
@@ -12,3 +13,13 @@ print a;
 print b
 
 1
+=======
+(* Primer ejemplo a compilar *)
+
+decl a <- 2 in
+decl b <- 3 in
+print b;
+print a;
+
+0
+>>>>>>> 34916f409a2c33f70e2a6184079ee66f38c1c6b5
