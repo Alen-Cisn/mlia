@@ -1,67 +1,67 @@
 {
-    "folders": [
-        {
-            "name": "MLia Language Implementation",
-            "path": "."
-        }
-    ],
-    "settings": {
-        // Workspace-specific overrides
-        "files.defaultLanguage": "rust",
-        "terminal.integrated.cwd": "${workspaceFolder}",
-        
-        // MLia file associations
-        "files.associations": {
-            "*.mlia": "ocaml",
-            "*.ml": "ocaml",
-            "*.bnf": "plaintext"
-        },
-        
-        // Project-specific git settings
-        "git.defaultCloneDirectory": "${workspaceFolder}/../",
-        "git.detectSubmodules": false,
-        
-        // Custom workspace layout
-        "workbench.editorAssociations": {
-            "*.mlia": "default"
-        },
-        
-        // Search configuration for language development
-        "search.useGlobalIgnoreFiles": true,
-        "search.useParentIgnoreFiles": true,
-        "search.followSymlinks": false,
-        
-        // Custom problem matchers
-        "problemMatchers": [
-            {
-                "name": "mlia-parser",
-                "owner": "mlia",
-                "fileLocation": ["relative", "${workspaceFolder}"],
-                "pattern": {
-                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-                    "file": 1,
-                    "line": 2,
-                    "column": 3,
-                    "severity": 4,
-                    "message": 5
-                }
-            }
-        ]
-    },
-    "extensions": {
-        "recommendations": [
-            "rust-lang.rust-analyzer",
-            "vadimcn.vscode-lldb",
-            "usernamehw.errorlens",
-            "eamodio.gitlens"
-        ]
-    },
-    "tasks": {
-        "version": "2.0.0",
-        "tasks": []
-    },
-    "launch": {
-        "version": "0.2.0",
-        "configurations": []
+  "folders": [
+    {
+      "name": "MLia Language Implementation",
+      "path": "."
     }
+  ],
+  "settings": {
+    // Workspace-specific overrides
+    "files.defaultLanguage": "rust",
+    "terminal.integrated.cwd": "${workspaceFolder}",
+
+    // MLia file associations
+    "files.associations": {
+      "*.mlia": "ocaml",
+      "*.ml": "ocaml",
+      "*.bnf": "plaintext"
+    },
+
+    // Project-specific git settings
+    "git.defaultCloneDirectory": "${workspaceFolder}/../",
+    "git.detectSubmodules": false,
+
+    // Custom workspace layout
+    "workbench.editorAssociations": {
+      "*.mlia": "default"
+    },
+
+    // Search configuration for language development
+    "search.useGlobalIgnoreFiles": true,
+    "search.useParentIgnoreFiles": true,
+    "search.followSymlinks": false,
+
+    // Custom problem matchers
+    "problemMatchers": [
+      {
+        "name": "mlia-parser",
+        "owner": "mlia",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "rust-lang.rust-analyzer",
+      "vadimcn.vscode-lldb",
+      "usernamehw.errorlens",
+      "eamodio.gitlens"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": []
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": []
+  }
 }
