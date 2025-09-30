@@ -1,0 +1,138 @@
+[
+    // === MLia Development Shortcuts ===
+    {
+        "key": "f5",
+        "command": "workbench.action.tasks.runTask",
+        "args": "run mlia with example",
+        "when": "resourceExtname == '.mlia'"
+    },
+    {
+        "key": "ctrl+f5",
+        "command": "workbench.action.tasks.runTask",
+        "args": "run mlia",
+        "when": "resourceExtname == '.mlia'"
+    },
+    {
+        "key": "shift+f5",
+        "command": "workbench.action.tasks.runTask",
+        "args": "run mlia with custom file",
+        "when": "resourceExtname == '.mlia'"
+    },
+    
+    // === Rust Development Shortcuts ===
+    {
+        "key": "ctrl+shift+b",
+        "command": "workbench.action.tasks.runTask",
+        "args": "cargo build"
+    },
+    {
+        "key": "ctrl+shift+t",
+        "command": "workbench.action.tasks.runTask",
+        "args": "cargo test"
+    },
+    {
+        "key": "ctrl+shift+c",
+        "command": "workbench.action.tasks.runTask",
+        "args": "cargo check"
+    },
+    {
+        "key": "ctrl+shift+l",
+        "command": "workbench.action.tasks.runTask",
+        "args": "cargo clippy"
+    },
+    {
+        "key": "ctrl+shift+f",
+        "command": "workbench.action.tasks.runTask",
+        "args": "cargo fmt"
+    },
+    
+    // === Quick Testing Shortcuts ===
+    {
+        "key": "ctrl+alt+p",
+        "command": "workbench.action.tasks.runTask",
+        "args": "test parser"
+    },
+    {
+        "key": "ctrl+alt+t",
+        "command": "workbench.action.tasks.runTask",
+        "args": "test tokenizer"
+    },
+    
+    // === Development Workflow ===
+    {
+        "key": "ctrl+shift+enter",
+        "command": "workbench.action.tasks.runTask",
+        "args": "full build and test"
+    },
+    {
+        "key": "ctrl+alt+enter",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pre-commit checks"
+    },
+    
+    // === Documentation ===
+    {
+        "key": "ctrl+alt+d",
+        "command": "workbench.action.tasks.runTask",
+        "args": "cargo doc"
+    },
+    
+    // === Watch Mode ===
+    {
+        "key": "ctrl+alt+w",
+        "command": "workbench.action.tasks.runTask",
+        "args": "cargo watch"
+    },
+    
+    // === Debug Configurations ===
+    {
+        "key": "f9",
+        "command": "workbench.action.debug.start",
+        "args": {
+            "name": "Debug MLia Interpreter"
+        }
+    },
+    {
+        "key": "shift+f9",
+        "command": "workbench.action.debug.start",
+        "args": {
+            "name": "Debug MLia with Example File"
+        }
+    },
+    
+    // === Terminal Shortcuts ===
+    {
+        "key": "ctrl+`",
+        "command": "workbench.action.terminal.toggleTerminal"
+    },
+    {
+        "key": "ctrl+shift+`",
+        "command": "workbench.action.terminal.new"
+    },
+    
+    // === File Navigation ===
+    {
+        "key": "ctrl+alt+m",
+        "command": "workbench.action.quickOpen",
+        "args": "docs/main.mlia"
+    },
+    {
+        "key": "ctrl+alt+e",
+        "command": "workbench.action.quickOpen",
+        "args": "docs/ejemplos.md"
+    },
+    
+    // === Rust-Analyzer Specific ===
+    {
+        "key": "ctrl+alt+r",
+        "command": "rust-analyzer.reload"
+    },
+    {
+        "key": "ctrl+alt+s",
+        "command": "rust-analyzer.syntaxTree"
+    },
+    {
+        "key": "ctrl+alt+h",
+        "command": "rust-analyzer.toggleInlayHints"
+    }
+]

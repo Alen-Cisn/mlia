@@ -4,11 +4,10 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'mlia'",
+            "name": "Debug MLia Interpreter",
             "cargo": {
                 "args": [
                     "build",
@@ -21,17 +20,124 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug",
+                "RUST_BACKTRACE": "1"
+            },
+            "console": "integratedTerminal",
+            "preLaunchTask": "cargo build"
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'mlia'",
+            "name": "Debug MLia with Example File",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=mlia",
+                    "--package=mlia"
+                ],
+                "filter": {
+                    "name": "mlia",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "${workspaceFolder}/docs/main.mlia"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug",
+                "RUST_BACKTRACE": "1"
+            },
+            "console": "integratedTerminal",
+            "preLaunchTask": "cargo build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug MLia with Custom File",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=mlia",
+                    "--package=mlia"
+                ],
+                "filter": {
+                    "name": "mlia",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "${input:mliaFile}"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug",
+                "RUST_BACKTRACE": "1"
+            },
+            "console": "integratedTerminal",
+            "preLaunchTask": "cargo build"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Parser Tests",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=mlia",
+                    "--lib",
+                    "--package=mlia",
+                    "parser"
+                ],
+                "filter": {
+                    "name": "mlia",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "RUST_LOG": "debug"
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Tokenizer Tests",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=mlia",
+                    "tokenizer"
+                ],
+                "filter": {
+                    "name": "mlia",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "RUST_LOG": "debug"
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug All Tests",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
                     "--package=mlia"
                 ],
                 "filter": {
@@ -41,9 +147,19 @@
             },
             "args": [],
             "env": {
-                "RUST_BACKTRACE": "1"
+                "RUST_BACKTRACE": "1",
+                "RUST_LOG": "debug"
             },
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "mliaFile",
+            "description": "Path to MLia source file",
+            "default": "${workspaceFolder}/docs/main.mlia",
+            "type": "promptString"
         }
     ]
 }

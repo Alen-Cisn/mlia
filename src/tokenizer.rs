@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::parser::Token;
+use std::collections::HashMap;
 
 // Este es el lexer.
 // input es el valor que entra y que va a ser convertido en tokens.
@@ -26,20 +26,20 @@ pub enum State {
 
 impl State {
     pub const COUNT: usize = 12;
-    pub fn from_index(index: usize) -> Option<State> {
+    pub const fn from_index(index: usize) -> Option<Self> {
         match index {
-            0 => Some(State::Start),
-            1 => Some(State::Digit),
-            2 => Some(State::PipeOrIdentifier),
-            3 => Some(State::AssignOrIdentifier),
-            4 => Some(State::FinishAssignOrIdentifier),
-            5 => Some(State::Identifier),
-            6 => Some(State::FinishArrowOrIdentifier),
-            7 => Some(State::ArrowOrIdentifierOrNegativeNumber),
-            8 => Some(State::ParenLOrComment),
-            9 => Some(State::Comment),
-            10 => Some(State::MayFinishComment),
-            11 => Some(State::ParenR),
+            0 => Some(Self::Start),
+            1 => Some(Self::Digit),
+            2 => Some(Self::PipeOrIdentifier),
+            3 => Some(Self::AssignOrIdentifier),
+            4 => Some(Self::FinishAssignOrIdentifier),
+            5 => Some(Self::Identifier),
+            6 => Some(Self::FinishArrowOrIdentifier),
+            7 => Some(Self::ArrowOrIdentifierOrNegativeNumber),
+            8 => Some(Self::ParenLOrComment),
+            9 => Some(Self::Comment),
+            10 => Some(Self::MayFinishComment),
+            11 => Some(Self::ParenR),
             _ => None,
         }
     }
@@ -74,8 +74,11 @@ impl CharClass {
     pub const COUNT: usize = 20;
 }
 
-pub fn classify_char(c: char) -> Option<CharClass> {
-    use CharClass::*;
+pub const fn classify_char(c: char) -> Option<CharClass> {
+    use CharClass::{
+        Caret, Digit, Equals, Exclam, Greater, LParen, Less, LowerAlpha, Minus, Percent, Pipe,
+        Plus, PunctGroup, RParen, Semicolon, Slash, Star, Underscore, UpperAlpha, Whitespace,
+    };
     match c {
         '0'..='9' => Some(Digit),
         'a'..='z' | '\u{00DF}'..='\u{00F6}' | '\u{00F8}'..='\u{00FF}' => Some(LowerAlpha),
@@ -101,27 +104,28 @@ pub fn classify_char(c: char) -> Option<CharClass> {
     }
 }
 
-pub fn is_identifier_char(c: char) -> bool {
+pub const fn is_identifier_char(c: char) -> bool {
     match c {
-        '0'..='9' |
-        'a'..='z' | '\u{00DF}'..='\u{00F6}' | '\u{00F8}'..='\u{00FF}' |
-        'A'..='Z' | '\u{00C0}'..='\u{00D6}' | '\u{00D8}'..='\u{00DE}' |
-        '<' |
-        '>' |
-        '-' |
-        '+' |
-        '*' |
-        '/' |
-        '=' |
-        '!' |
-        '%' |
-        '^' |
-        '_' |
-        '|' => true,
-        '(' => false,
-        ')' => false,
-        ';' => false,
-        '{' | '}' | '[' | ']' | '.' | ':' => false,
+        '0'..='9'
+        | 'a'..='z'
+        | '\u{00DF}'..='\u{00F6}'
+        | '\u{00F8}'..='\u{00FF}'
+        | 'A'..='Z'
+        | '\u{00C0}'..='\u{00D6}'
+        | '\u{00D8}'..='\u{00DE}'
+        | '<'
+        | '>'
+        | '-'
+        | '+'
+        | '*'
+        | '/'
+        | '='
+        | '!'
+        | '%'
+        | '^'
+        | '_'
+        | '|' => true,
+        '(' | ')' | ';' | '{' | '}' | '[' | ']' | '.' | ':' => false,
         _ if c.is_whitespace() => false,
         _ => false,
     }
@@ -187,8 +191,8 @@ pub fn next_state(current: State, class: CharClass) -> Result<Option<State>, Str
     }
 }
 
-lazy_static::lazy_static! {
-    pub static ref KEYWORDS: HashMap<&'static str, Token> = {
+pub static KEYWORDS: std::sync::LazyLock<HashMap<&'static str, Token>> =
+    std::sync::LazyLock::new(|| {
         const KEYWORDS: &[(&str, Token)] = &[
             ("decl", Token::Decl),
             ("while", Token::While),
@@ -216,12 +220,11 @@ lazy_static::lazy_static! {
             (")", Token::ParenR),
         ];
         let mut m = HashMap::new();
-        for &(k, ref v) in KEYWORDS.iter() {
+        for &(k, ref v) in KEYWORDS {
             m.insert(k, v.clone());
         }
         m
-    };
-}
+    });
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -234,7 +237,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(input: String) -> Self {
+    pub const fn new(input: String) -> Self {
         Self {
             input,
             position: 0,
@@ -260,16 +263,13 @@ impl Lexer {
             } else {
                 None
             };
-            let class = match classify_char(c) {
-                Some(cc) => cc,
-                None => {
-                    return Err(format!(
-                        "Caracter inesperado '{}' en la línea {}, columna {}",
-                        c, self.line, self.column
-                    ));
-                }
+            let Some(class) = classify_char(c) else {
+                return Err(format!(
+                    "Caracter inesperado '{}' en la línea {}, columna {}",
+                    c, self.line, self.column
+                ));
             };
-            println!("Estado: {:?}, Char: '{}', Clase: {:?} -> ", state, c, class);
+            println!("Estado: {state:?}, Char: '{c}', Clase: {class:?} -> ");
 
             let next = next_state(state, class);
 
@@ -317,7 +317,7 @@ impl Lexer {
     }
 
     fn finalize_lexeme(&mut self, state: State) -> Result<(), String> {
-        if  self.current_lexeme.is_empty() {
+        if self.current_lexeme.is_empty() {
             return Ok(());
         }
 
@@ -361,7 +361,7 @@ impl Lexer {
 
 pub type TransitionAction = fn(&mut Lexer, Option<char>, Option<char>);
 
-fn action_noop(_: &mut Lexer, _: Option<char>, _: Option<char>) {}
+const fn action_noop(_: &mut Lexer, _: Option<char>, _: Option<char>) {}
 fn action_start_lexeme(lexer: &mut Lexer, ch: Option<char>, _next_ch: Option<char>) {
     if let Some(c) = ch {
         lexer.append_char(c);
@@ -412,13 +412,10 @@ fn action_append_and_maybe_emit_arrow(lexer: &mut Lexer, ch: Option<char>, next_
 
 fn action_maybe_emit_paren_l(lexer: &mut Lexer, _: Option<char>, next_ch: Option<char>) {
     // Check if the next character is '*' to start a comment, otherwise emit ParenL
-    if next_ch == Some('*') {
-        // Don't emit ParenL, we're starting a comment
-        lexer.clear_lexeme();
-    } else {
+    if next_ch != Some('*') {
         lexer.tokens.push(Token::ParenL);
-        lexer.clear_lexeme();
     }
+    lexer.clear_lexeme();
 }
 
 fn action_maybe_emit_paren_r(lexer: &mut Lexer, _: Option<char>, _: Option<char>) {
@@ -440,26 +437,26 @@ fn action_end_comment(lexer: &mut Lexer, _: Option<char>, _: Option<char>) {
 pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
     // q0 (Start)
     [
-        action_start_lexeme,   // Digit
-        action_start_lexeme,   // LowerAlpha
-        action_start_lexeme,   // UpperAlpha
-        action_start_lexeme,   // < (may start identifier or <-)
-        action_start_lexeme,   // >
-        action_start_lexeme,   // - (may start integer or -> or identifier)
-        action_start_lexeme,   // +
-        action_start_lexeme,   // *
-        action_start_lexeme,   // /
-        action_start_lexeme,   // =
-        action_start_lexeme,   // !
-        action_start_lexeme,   // %
-        action_start_lexeme,   // ^
-        action_start_lexeme,   // _
-        action_start_lexeme,   // | (  start identifier too)
-        action_maybe_emit_paren_l,           // (
-        action_maybe_emit_paren_r,           // )
-        action_emit_semicolon, // ;
-        action_noop,           // whitespace
-        action_noop,           // { } [ ] . :
+        action_start_lexeme,       // Digit
+        action_start_lexeme,       // LowerAlpha
+        action_start_lexeme,       // UpperAlpha
+        action_start_lexeme,       // < (may start identifier or <-)
+        action_start_lexeme,       // >
+        action_start_lexeme,       // - (may start integer or -> or identifier)
+        action_start_lexeme,       // +
+        action_start_lexeme,       // *
+        action_start_lexeme,       // /
+        action_start_lexeme,       // =
+        action_start_lexeme,       // !
+        action_start_lexeme,       // %
+        action_start_lexeme,       // ^
+        action_start_lexeme,       // _
+        action_start_lexeme,       // | (  start identifier too)
+        action_maybe_emit_paren_l, // (
+        action_maybe_emit_paren_r, // )
+        action_emit_semicolon,     // ;
+        action_noop,               // whitespace
+        action_noop,               // { } [ ] . :
     ],
     // q1 (Digit)
     [
@@ -624,26 +621,26 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
     ],
     // q8 (ParenLOrComment)
     [
-        action_noop, // Digit
-        action_noop, // LowerAlpha
-        action_noop, // UpperAlpha
-        action_noop, // <
-        action_noop, // >
-        action_noop, // -
-        action_noop, // +
-        action_clear_paren_l,              // *
-        action_noop, // /
-        action_noop, // =
-        action_noop, // !
-        action_noop, // %
-        action_noop, // ^
-        action_noop, // _
-        action_noop, // |
-        action_noop, // (
-        action_noop, // )
-        action_noop, // ;
-        action_noop, // whitespace
-        action_noop, // punct group
+        action_noop,          // Digit
+        action_noop,          // LowerAlpha
+        action_noop,          // UpperAlpha
+        action_noop,          // <
+        action_noop,          // >
+        action_noop,          // -
+        action_noop,          // +
+        action_clear_paren_l, // *
+        action_noop,          // /
+        action_noop,          // =
+        action_noop,          // !
+        action_noop,          // %
+        action_noop,          // ^
+        action_noop,          // _
+        action_noop,          // |
+        action_noop,          // (
+        action_noop,          // )
+        action_noop,          // ;
+        action_noop,          // whitespace
+        action_noop,          // punct group
     ],
     // q9 (Comment)
     [
@@ -670,29 +667,29 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
     ],
     // q10 (MayFinishComment)
     [
-        action_noop, // Digit
-        action_noop, // LowerAlpha
-        action_noop, // UpperAlpha
-        action_noop, // <
-        action_noop, // >
-        action_noop, // -
-        action_noop, // +
-        action_noop, // *
-        action_noop, // /
-        action_noop, // =
-        action_noop, // !
-        action_noop, // %
-        action_noop, // ^
-        action_noop, // _
-        action_noop, // |
-        action_noop, // (
+        action_noop,        // Digit
+        action_noop,        // LowerAlpha
+        action_noop,        // UpperAlpha
+        action_noop,        // <
+        action_noop,        // >
+        action_noop,        // -
+        action_noop,        // +
+        action_noop,        // *
+        action_noop,        // /
+        action_noop,        // =
+        action_noop,        // !
+        action_noop,        // %
+        action_noop,        // ^
+        action_noop,        // _
+        action_noop,        // |
+        action_noop,        // (
         action_end_comment, // ) - end the comment
-        action_noop, // ;
-        action_noop, // whitespace
-        action_noop, // punct group
+        action_noop,        // ;
+        action_noop,        // whitespace
+        action_noop,        // punct group
     ],
     // q11 (ParenR)
-    [ 
+    [
         action_noop, // Digit
         action_noop, // LowerAlpha
         action_noop, // UpperAlpha
@@ -725,9 +722,8 @@ mod tests {
         let mut lexer = Lexer::new("123 456123 0".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -739,7 +735,7 @@ mod tests {
         );
         assert_eq!(
             tokens[1],
-            Token::IntegerLiteral(456123),
+            Token::IntegerLiteral(456_123),
             "El token 1 no es un entero: {:?}",
             tokens[1]
         );
@@ -757,9 +753,8 @@ mod tests {
         let tokens = lexer.tokenize();
 
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -775,9 +770,8 @@ mod tests {
         let mut lexer = Lexer::new("decl".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -794,9 +788,8 @@ mod tests {
         let mut lexer = Lexer::new("=".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -813,9 +806,8 @@ mod tests {
         let mut lexer = Lexer::new("decl x = 42".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -850,9 +842,8 @@ mod tests {
         let mut lexer = Lexer::new("  decl   x   =   123  \n  decl   y   =   456  ".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -911,9 +902,8 @@ mod tests {
         let mut lexer = Lexer::new("while < á 10 do print á done".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -969,9 +959,8 @@ mod tests {
         let mut lexer = Lexer::new("( )".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -994,9 +983,8 @@ mod tests {
         let mut lexer = Lexer::new("(+ 1 2)".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -1012,9 +1000,8 @@ mod tests {
         let mut lexer = Lexer::new("((()))".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -1031,9 +1018,8 @@ mod tests {
         let mut lexer = Lexer::new("( (* comment *) )".to_string());
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "El lexer no debería devolver un error: {:?}",
-            tokens
+            tokens.is_ok(),
+            "El lexer no debería devolver un error: {tokens:?}"
         );
         let tokens = tokens.unwrap();
 
@@ -1061,9 +1047,8 @@ mod tests {
         let mut lexer = Lexer::new(collected);
         let tokens = lexer.tokenize();
         assert!(
-            !tokens.is_err(),
-            "Lexer should not error on docs example: {:?}",
-            tokens
+            tokens.is_ok(),
+            "Lexer should not error on docs example: {tokens:?}"
         );
         let tokens = tokens.unwrap();
         // quick invariants

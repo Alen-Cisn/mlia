@@ -1,0 +1,94 @@
+{
+    "recommendations": [
+        // === Rust Development ===
+        "rust-lang.rust-analyzer",           // Essential Rust language server
+        "vadimcn.vscode-lldb",               // LLDB debugger for Rust
+        "serayuzgur.crates",                 // Crates.io dependency management
+        "tamasfe.even-better-toml",          // Enhanced TOML support for Cargo.toml
+        
+        // === Language Development & Parsing ===
+        "ms-vscode.hexeditor",               // Binary file inspection
+        "IBM.output-colorizer",              // Colorize output in terminal/debug console
+        "ms-vscode.vscode-json",             // Enhanced JSON support for configs
+        
+        // === Code Quality & Formatting ===
+        "usernamehw.errorlens",              // Inline error/warning display
+        "streetsidesoftware.code-spell-checker", // Spell checking for comments/docs
+        "esbenp.prettier-vscode",            // Code formatter for JSON/configs
+        "bradlc.vscode-tailwindcss",         // If using any web-based tooling
+        
+        // === Git & Version Control ===
+        "eamodio.gitlens",                   // Enhanced Git capabilities
+        "mhutchie.git-graph",                // Visual git history
+        
+        // === Documentation & Markdown ===
+        "yzhang.markdown-all-in-one",       // Enhanced Markdown support
+        "shd101wyy.markdown-preview-enhanced", // Advanced Markdown preview
+        "davidanson.vscode-markdownlint",   // Markdown linting
+        
+        // === Development Experience ===
+        "gruntfuggly.todo-tree",            // TODO/FIXME highlighting
+        "alefragnani.bookmarks",             // Code bookmarks
+        "ms-vscode.vscode-typescript-next",  // For any JS/TS tooling
+        "ms-vscode.live-server",             // Live preview for any web components
+        
+        // === LLVM & Compiler Development ===
+        "zxh404.vscode-proto3",              // Protocol buffers (useful for LLVM IR)
+        "ms-vscode.cmake-tools",             // CMake support if building LLVM tools
+        "webfreak.debug",                    // Additional debugging capabilities
+        
+        // === OCaml/ML Language Support ===
+        "ocamllabs.ocaml-platform",         // OCaml support for ML syntax reference
+        "reasonml.reason-vscode",            // ReasonML support (ML-family language)
+        
+        // === Testing & Benchmarking ===
+        "swellaby.vscode-rust-test-adapter", // Rust test integration
+        "hbenl.vscode-test-explorer",       // Test explorer UI
+        
+        // === Performance & Profiling ===
+        "vadimcn.vscode-lldb",               // LLDB for performance debugging
+        "ms-vscode.hexeditor",               // Binary analysis
+        
+        // === Theme & UI Enhancement ===
+        "pkief.material-icon-theme",        // Better file icons
+        "github.github-vscode-theme",       // GitHub theme
+        "dracula-theme.theme-dracula",      // Alternative dark theme
+        
+        // === Productivity ===
+        "ms-vscode.vscode-typescript-next",  // Enhanced IntelliSense
+        "bradlc.vscode-tailwindcss",         // CSS utilities if needed
+        "formulahendry.code-runner",         // Quick code execution
+        
+        // === Language Server Protocol Development ===
+        "ms-vscode.vscode-languageserver-node", // LSP development tools
+        "redhat.vscode-yaml",                // YAML support for configs
+        
+        // === Documentation Generation ===
+        "cschlosser.doxdocgen",              // Documentation generation
+        "ms-vscode.vscode-mdx",              // MDX support for documentation
+        
+        // === Terminal & Shell Enhancement ===
+        "ms-vscode.powershell",              // PowerShell support
+        "timonwong.shellcheck",              // Shell script linting
+        
+        // === Remote Development (if needed) ===
+        "ms-vscode-remote.vscode-remote-extensionpack", // Remote development
+        
+        // === Additional Utilities ===
+        "ms-vscode.vscode-serial-monitor",   // Serial monitoring (useful for embedded targets)
+        "ms-vscode.vscode-embedded-tools"    // Embedded development tools
+    ],
+    "unwantedRecommendations": [
+        // Avoid conflicting Rust extensions
+        "kalitaalexey.vscode-rust",
+        "rust-lang.rust",
+        
+        // Avoid conflicting formatters
+        "ms-python.autopep8",
+        "ms-python.flake8",
+        
+        // Avoid heavy extensions that might slow down the workspace
+        "ms-vscode.vscode-spring-boot-dashboard",
+        "redhat.java"
+    ]
+}

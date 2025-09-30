@@ -1,0 +1,135 @@
+{
+    "Variable Declaration": {
+        "prefix": "decl",
+        "body": [
+            "decl ${1:variable} <- ${2:value}"
+        ],
+        "description": "MLia variable declaration"
+    },
+    "Function Declaration": {
+        "prefix": "fun",
+        "body": [
+            "decl ${1:function_name} <- fun ${2:param1} ${3:param2} -> ${4:body}"
+        ],
+        "description": "MLia function declaration"
+    },
+    "Function Declaration Multi-line": {
+        "prefix": "funml",
+        "body": [
+            "decl ${1:function_name} <- fun ${2:param1} ${3:param2} ->",
+            "    ${4:body}"
+        ],
+        "description": "MLia multi-line function declaration"
+    },
+    "Match Expression": {
+        "prefix": "match",
+        "body": [
+            "match ${1:expression} with",
+            "| ${2:pattern1} -> ${3:result1}",
+            "| ${4:pattern2} -> ${5:result2}"
+        ],
+        "description": "MLia match expression"
+    },
+    "While Loop": {
+        "prefix": "while",
+        "body": [
+            "while ${1:condition} do",
+            "    ${2:body}",
+            "done"
+        ],
+        "description": "MLia while loop"
+    },
+    "If-Then-Else": {
+        "prefix": "if",
+        "body": [
+            "if ${1:condition} then ${2:true_branch} else ${3:false_branch}"
+        ],
+        "description": "MLia if-then-else expression"
+    },
+    "If-Then-Else Multi-line": {
+        "prefix": "ifml",
+        "body": [
+            "if ${1:condition} then",
+            "    ${2:true_branch}",
+            "else",
+            "    ${3:false_branch}"
+        ],
+        "description": "MLia multi-line if-then-else expression"
+    },
+    "Print Statement": {
+        "prefix": "print",
+        "body": [
+            "print ${1:value}"
+        ],
+        "description": "MLia print statement"
+    },
+    "List Literal": {
+        "prefix": "list",
+        "body": [
+            "[${1:element1}; ${2:element2}; ${3:element3}]"
+        ],
+        "description": "MLia list literal"
+    },
+    "Tuple": {
+        "prefix": "tuple",
+        "body": [
+            "(${1:element1}, ${2:element2})"
+        ],
+        "description": "MLia tuple"
+    },
+    "Let Expression": {
+        "prefix": "let",
+        "body": [
+            "let ${1:variable} = ${2:value} in ${3:expression}"
+        ],
+        "description": "MLia let expression"
+    },
+    "Let Expression Multi-line": {
+        "prefix": "letml",
+        "body": [
+            "let ${1:variable} = ${2:value} in",
+            "${3:expression}"
+        ],
+        "description": "MLia multi-line let expression"
+    },
+    "Comment Block": {
+        "prefix": "comment",
+        "body": [
+            "(* ${1:comment} *)"
+        ],
+        "description": "MLia comment block"
+    },
+    "Multi-line Comment": {
+        "prefix": "commentml",
+        "body": [
+            "(*",
+            " * ${1:comment}",
+            " *)"
+        ],
+        "description": "MLia multi-line comment block"
+    },
+    "Recursive Function": {
+        "prefix": "rec",
+        "body": [
+            "decl ${1:function_name} <- rec ${2:param} ->",
+            "    match ${2:param} with",
+            "    | ${3:base_case} -> ${4:base_result}",
+            "    | ${5:recursive_case} -> ${6:recursive_call}"
+        ],
+        "description": "MLia recursive function pattern"
+    },
+    "Anonymous Function": {
+        "prefix": "lambda",
+        "body": [
+            "fun ${1:param} -> ${2:body}"
+        ],
+        "description": "MLia anonymous function (lambda)"
+    },
+    "Type Annotation": {
+        "prefix": "type",
+        "body": [
+            "${1:expression} : ${2:type}"
+        ],
+        "description": "MLia type annotation"
+    }
+}
