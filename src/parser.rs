@@ -18,13 +18,16 @@ pomelo! {
     %token #[derive(Debug, Clone, PartialEq)] pub enum Token {};
 
     // Precedence rules (lowest to highest)
-    %left Semicolon;
-    %right In;
-    %right Assign;
+    // In should have LOWER precedence than Semicolon
+    // so that In captures everything to the right including semicolons
+    // %right In;
+    // %left Semicolon;
+    // %right Assign;
 
     %type IntegerLiteral i64;
     %type Identifier String;
     %type expr Expr;
+    %type seq_expr Expr;
     %type atom_expr Expr;
     %type assign_expr Expr;
     %type call_expr Expr;
@@ -36,15 +39,18 @@ pomelo! {
     // Program is just an expression
     program ::= expr(e) { e }
 
-    // Sequence expressions (lowest precedence)
-    expr ::= expr(first) Semicolon expr(second) { Expr::Seq(Box::new(first), Box::new(second)) }
-    expr ::= assign_expr(e) { e }
-
-    // Assignment and declaration expressions
-    assign_expr ::= Identifier(var) Assign assign_expr(val) { Expr::Assign(var, Box::new(val)) }
-    assign_expr ::= Decl Identifier(var) Assign assign_expr(val) In assign_expr(body) {
+    // Declaration expressions (lowest precedence - captures everything after In)
+    expr ::= Decl Identifier(var) Assign assign_expr(val) In expr(body) {
         Expr::Decl(var, vec![], Box::new(val), Box::new(body))
     }
+    expr ::= seq_expr(e) { e }
+
+    // Sequence expressions
+    seq_expr ::= seq_expr(first) Semicolon assign_expr(second) { Expr::Seq(Box::new(first), Box::new(second)) }
+    seq_expr ::= assign_expr(e) { e }
+
+    // Assignment expressions
+    assign_expr ::= Identifier(var) Assign assign_expr(val) { Expr::Assign(var, Box::new(val)) }
     assign_expr ::= call_expr(e) { e }
 
     // Function call expressions

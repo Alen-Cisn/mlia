@@ -63,63 +63,6 @@
       },
       "console": "integratedTerminal",
       "preLaunchTask": "cargo build"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug Parser Tests",
-      "cargo": {
-        "args": ["test", "--no-run", "--lib", "--package=mlia", "parser"],
-        "filter": {
-          "name": "mlia",
-          "kind": "lib"
-        }
-      },
-      "args": [],
-      "env": {
-        "RUST_BACKTRACE": "1",
-        "RUST_LOG": "debug"
-      },
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug Tokenizer Tests",
-      "cargo": {
-        "args": ["test", "--no-run", "--lib", "--package=mlia", "tokenizer"],
-        "filter": {
-          "name": "mlia",
-          "kind": "lib"
-        }
-      },
-      "args": [],
-      "env": {
-        "RUST_BACKTRACE": "1",
-        "RUST_LOG": "debug"
-      },
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug All Tests",
-      "cargo": {
-        "args": ["test", "--no-run", "--package=mlia"],
-        "filter": {
-          "name": "mlia",
-          "kind": "bin"
-        }
-      },
-      "args": [],
-      "env": {
-        "RUST_BACKTRACE": "1",
-        "RUST_LOG": "debug"
-      },
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
     }
   ],
   "inputs": [

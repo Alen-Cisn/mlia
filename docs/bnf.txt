@@ -23,10 +23,10 @@ uppercase_letter ::= A-Z
 
 letter	::=	uppercase_letter
     | lowercase_letter
- 
+
 symbol_char ::= "!" | "$" | "%" | "&" | "*" | "+" | "-" | "/"
     | ":" | "<" | "=" | ">" | "?" | "@" | "\\" | "^" | "|" | "~"
- 
+
 identifier	::=	( letter | "_" | symbol_char ) { letter | decimal_digit | "_" | symbol_char }
 
 reserved_word ::= "decl" | "while" | "match" | "with" | "done" | "in" | "do"
@@ -40,13 +40,13 @@ expression ::= literal
     | identifier
     | "(" expression ")"
     | expression { expression } # Aplicación de funciones
-    | expression comment # Aplicación de funciones
+    | expression comment #
     | expression { ";" expression } # Secuencia de expresiones, se ignora el primer valor
     | identifier "<-" expression # Asignación a variable
     | { declaration "in" } expression  # Declaraciones cuyo scope es la expresión
     | "while" expression "do" expression "done" # Ciclo while
     # Match sobre literales
-    | "match" expression "with"  "|" literal "->" expression { "|" literal "->" expression } 
+    | "match" expression "with"  "|" literal "->" expression { "|" literal "->" expression }
 
 
 program ::= [ comment ] expression

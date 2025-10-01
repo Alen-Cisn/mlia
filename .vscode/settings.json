@@ -2,17 +2,6 @@
   // === Rust Language Settings ===
   "rust-analyzer.cargo.buildScripts.enable": true,
   "rust-analyzer.cargo.features": "all",
-  "rust-analyzer.checkOnSave.command": "clippy",
-  "rust-analyzer.checkOnSave.allTargets": true,
-  "rust-analyzer.checkOnSave.extraArgs": [
-    "--",
-    "-W",
-    "clippy::all",
-    "-W",
-    "clippy::pedantic",
-    "-W",
-    "clippy::nursery"
-  ],
   "rust-analyzer.imports.granularity.group": "module",
   "rust-analyzer.imports.prefix": "crate",
   "rust-analyzer.procMacro.enable": true,

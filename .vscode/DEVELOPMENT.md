@@ -7,11 +7,13 @@ This workspace is configured for optimal development of the MLia programming lan
 ## Keyboard Shortcuts
 
 ### Running MLia Programs
+
 - **F5**: Run MLia with example file (`docs/main.mlia`)
 - **Ctrl+F5**: Run MLia interpreter (interactive mode)
 - **Shift+F5**: Run MLia with custom file (prompts for file path)
 
 ### Building and Testing
+
 - **Ctrl+Shift+B**: Build project (`cargo build`)
 - **Ctrl+Shift+T**: Run all tests (`cargo test`)
 - **Ctrl+Shift+C**: Check code (`cargo check`)
@@ -19,19 +21,23 @@ This workspace is configured for optimal development of the MLia programming lan
 - **Ctrl+Shift+F**: Format code (`cargo fmt`)
 
 ### Component Testing
+
 - **Ctrl+Alt+P**: Test parser module
 - **Ctrl+Alt+T**: Test tokenizer module
 
 ### Debugging
+
 - **F9**: Debug MLia interpreter
 - **Shift+F9**: Debug MLia with example file
 
 ### Development Workflow
+
 - **Ctrl+Shift+Enter**: Full build and test cycle
 - **Ctrl+Alt+Enter**: Pre-commit checks (format, lint, test)
 - **Ctrl+Alt+W**: Start watch mode (auto-rebuild on changes)
 
 ### Documentation
+
 - **Ctrl+Alt+D**: Generate and open documentation
 
 ## VS Code Tasks
@@ -39,6 +45,7 @@ This workspace is configured for optimal development of the MLia programming lan
 Access tasks via `Ctrl+Shift+P` → "Tasks: Run Task":
 
 ### Build Tasks
+
 - `cargo build` - Standard build
 - `cargo build release` - Optimized build
 - `cargo check` - Fast syntax/type checking
@@ -47,24 +54,28 @@ Access tasks via `Ctrl+Shift+P` → "Tasks: Run Task":
 - `cargo clean` - Clean build artifacts
 
 ### Test Tasks
+
 - `cargo test` - Run all tests
 - `cargo test verbose` - Run tests with detailed output
 - `test parser` - Test parser module only
 - `test tokenizer` - Test tokenizer module only
 
 ### MLia Interpreter Tasks
+
 - `run mlia` - Run interpreter in interactive mode
 - `run mlia with example` - Run with `docs/main.mlia`
 - `run mlia with custom file` - Run with user-specified file
 - `run mlia release` - Run optimized build
 
 ### Development Tasks
+
 - `full build and test` - Complete development cycle
 - `pre-commit checks` - Quick validation before committing
 - `cargo watch` - Auto-rebuild on file changes
 - `cargo doc` - Generate documentation
 
 ### LLVM Preparation
+
 - `check llvm-config` - Verify LLVM installation
 - `install llvm dependencies` - Add LLVM codegen dependencies
 
@@ -124,26 +135,31 @@ Type these prefixes and press Tab for code completion:
 ## Development Workflow
 
 ### Starting Development
+
 1. Open the workspace in VS Code
 2. Install recommended extensions when prompted
 3. Run `Ctrl+Shift+Enter` to verify everything builds and tests pass
 
 ### Working on Parser
+
 1. Edit `src/parser.rs`
 2. Run `Ctrl+Alt+P` to test parser changes
 3. Use `F9` to debug parser issues
 
 ### Working on Tokenizer
+
 1. Edit `src/tokenizer.rs`
 2. Run `Ctrl+Alt+T` to test tokenizer changes
 3. Test with example files using `F5`
 
 ### Testing Language Features
+
 1. Edit `docs/main.mlia` or create new `.mlia` files
 2. Run with `F5` (example) or `Shift+F5` (custom file)
 3. Debug language execution with `Shift+F9`
 
 ### Before Committing
+
 - Run `Ctrl+Alt+Enter` for pre-commit checks
 - Ensure all tests pass and code is formatted
 
@@ -160,18 +176,22 @@ When ready to add LLVM codegen:
 ## Troubleshooting
 
 ### Rust-Analyzer Issues
+
 - Press `Ctrl+Alt+R` to reload Rust-analyzer
 - Check that Cargo.toml dependencies are up to date
 
 ### Build Issues
+
 - Run `cargo clean` task
 - Verify Rust toolchain: `rustc --version`
 
 ### LLVM Issues
+
 - Ensure LLVM is installed: `llvm-config --version`
 - Check LLVM version compatibility with Inkwell
 
 ### Performance Issues
+
 - Use release builds for performance testing
 - Profile with `cargo flamegraph` (requires installation)
 
