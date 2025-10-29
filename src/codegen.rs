@@ -1,6 +1,6 @@
 use crate::parser::Expr;
 use inkwell::OptimizationLevel;
-use inkwell::builder::Builder;
+use inkwell::builder::{Builder, BuilderError};
 use inkwell::context::Context;
 use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
@@ -111,6 +111,13 @@ impl<'ctx> CodeGen<'ctx> {
             Expr::Call(func_name, args) => {
                 if func_name == "print" && args.len() == 1 {
                     self.compile_print_call(&args[0])
+                } else if (&func_name == &"+"
+                    || &func_name == &"-"
+                    || &func_name == &"*"
+                    || &func_name == &"/")
+                    && args.len() == 2
+                {
+                    self.compile_binop(func_name, &args[0], &args[1])
                 } else {
                     Err("Unknown function call")
                 }
@@ -188,6 +195,33 @@ impl<'ctx> CodeGen<'ctx> {
 
         // Return the original value
         Ok(arg_val)
+    }
+
+    /// Compiles a binary operation.
+    fn compile_binop(
+        &mut self,
+        op: &str,
+        lhs: &Expr,
+        rhs: &Expr,
+    ) -> Result<IntValue<'ctx>, &'static str> {
+        let lhs_val = self.compile_expr(lhs)?;
+        let rhs_val = self.compile_expr(rhs)?;
+
+        let op_result = match op {
+            "+" => Some(self.builder.build_int_add(lhs_val, rhs_val, "add")),
+            "-" => Some(self.builder.build_int_sub(lhs_val, rhs_val, "sub")),
+            "*" => Some(self.builder.build_int_mul(lhs_val, rhs_val, "mul")),
+            "/" => Some(self.builder.build_int_signed_div(lhs_val, rhs_val, "div")),
+            _ => None,
+        };
+
+        match op_result {
+            Some(result) => match result {
+                Ok(val) => Ok(val),
+                Err(_) => Err("Failed to build binary operation"),
+            },
+            None => Err("Invalid operand type"),
+        }
     }
 
     /// Compiles the entire program and returns a JIT-compiled function.

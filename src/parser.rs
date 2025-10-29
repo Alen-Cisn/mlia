@@ -56,6 +56,7 @@ pomelo! {
     // Function call expressions
     call_expr ::= Identifier(func) atom_expr(arg) { Expr::Call(func, vec![arg]) }
     call_expr ::= Print atom_expr(arg) { Expr::Call("print".to_string(), vec![arg]) }
+    call_expr ::= Plus atom_expr(arg1) atom_expr(arg2) { Expr::Call("+".to_string(), vec![arg1, arg2]) }
     call_expr ::= atom_expr(e) { e }
 
     // Atomic expressions (highest precedence)

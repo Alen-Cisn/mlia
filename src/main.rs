@@ -18,7 +18,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let input_file = &args[1];
     let mut output_file: Option<String> = None;
-    let mut jit_mode = false;
 
     // Parse command line arguments
     let mut i = 2;
@@ -27,18 +26,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "--output" | "-o" => {
                 if i + 1 < args.len() {
                     output_file = Some(args[i + 1].clone());
-                    jit_mode = false;
                     i += 2;
                 } else {
                     return Err("--output requires a filename".into());
                 }
-            }
-            "--exe" => {
-                // Generate executable with same name as input but .exe extension
-                let base_name = input_file.strip_suffix(".mlia").unwrap_or(input_file);
-                output_file = Some(format!("{}.exe", base_name));
-                jit_mode = false;
-                i += 1;
             }
             _ => {
                 return Err(format!("Unknown argument: {}", args[i]).into());
@@ -64,29 +55,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let context = Context::create();
     let mut codegen = CodeGen::new(&context)?;
 
-    if jit_mode {
-        println!("\nCompiling and executing with JIT...");
+    println!("\nCompiling to executable...");
 
-        // Execute the program with JIT
-        let result = codegen.execute_program(&ast)?;
+    let output_path =
+        output_file.unwrap_or_else(|| input_file.trim_end_matches(".mlia").to_string());
 
-        // Print the generated LLVM IR for debugging
-        println!("\nGenerated LLVM IR:");
-        codegen.print_ir();
+    codegen.compile_to_executable(&ast, &output_path)?;
 
-        println!("Program returned: {}", result);
-    } else {
-        println!("\nCompiling to executable...");
-
-        let output_path =
-            output_file.unwrap_or_else(|| input_file.trim_end_matches(".mlia").to_string());
-
-        codegen.compile_to_executable(&ast, &output_path)?;
-
-        // Print the generated LLVM IR for debugging
-        println!("\nGenerated LLVM IR:");
-        codegen.print_ir();
-    }
+    // Print the generated LLVM IR for debugging
+    println!("\nGenerated LLVM IR:");
+    codegen.print_ir();
 
     Ok(())
 }
