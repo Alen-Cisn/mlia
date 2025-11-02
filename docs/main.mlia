@@ -1,9 +1,7 @@
-
-(* Primer ejemplo a compilar *)
-
-decl a <- 2 in
-decl b <- 3 in
-print b;
-print a;
-
-0
+(* Simple countdown from 3 to 0 *)
+decl x <- 3 in
+while > x -200 do
+    x <- - x 5;
+    print x
+done;
+print x

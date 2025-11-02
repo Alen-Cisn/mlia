@@ -4,11 +4,17 @@
 *.pdb
 Cargo.lock
 .cargo/
+*.rlib
+*.prof
+*.profdata
 
 # IDE o editores
 *.swp
 *.swo
 *~
+.vscode/
+.idea/
+*.iml
 
 # OS generated files
 .DS_Store

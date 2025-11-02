@@ -2,12 +2,11 @@ mod codegen;
 mod parser;
 mod tokenizer;
 
-use std::env::args;
-use std::fs;
-
 use codegen::CodeGen;
 use inkwell::context::Context;
 use parser::parse_program;
+use std::env::args;
+use std::fs;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = args().collect();
@@ -17,7 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let input_file = &args[1];
-    let mut output_file: Option<String> = None;
+    let mut _output_file: Option<String> = None;
 
     // Parse command line arguments
     let mut i = 2;
@@ -25,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match args[i].as_str() {
             "--output" | "-o" => {
                 if i + 1 < args.len() {
-                    output_file = Some(args[i + 1].clone());
+                    _output_file = Some(args[i + 1].clone());
                     i += 2;
                 } else {
                     return Err("--output requires a filename".into());
@@ -37,34 +36,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // Read the file content
-    let source_code = if input_file.ends_with(".mlia") {
-        fs::read_to_string(input_file)?
-    } else {
-        // If it's not a file, treat it as direct source code
-        input_file.clone()
-    };
+    // Read the source file
+    let source_code = fs::read_to_string(input_file)?;
 
-    println!("Parsing source code...");
+    println!("Parsing source code from {}...", input_file);
 
-    // Parse the source code into an AST
+    // Parse the program
     let ast = parse_program(source_code)?;
-    println!("Parse result: {ast:?}");
 
-    // Create LLVM context and code generator
+    println!("Compiling to LLVM IR...");
+
+    // Create LLVM context and codegen
     let context = Context::create();
     let mut codegen = CodeGen::new(&context)?;
 
-    println!("\nCompiling to executable...");
+    // Execute the program and get result
+    let result = codegen.execute_program(&ast)?;
 
-    let output_path =
-        output_file.unwrap_or_else(|| input_file.trim_end_matches(".mlia").to_string());
-
-    codegen.compile_to_executable(&ast, &output_path)?;
-
-    // Print the generated LLVM IR for debugging
-    println!("\nGenerated LLVM IR:");
-    codegen.print_ir();
+    println!("Program executed successfully.");
+    println!("Result: {}", result);
 
     Ok(())
 }
