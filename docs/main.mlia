@@ -1,7 +1,8 @@
-(* Simple countdown from 3 to 0 *)
+(* Simple countdown *)
 decl x <- 3 in
 while > x -200 do
     x <- - x 5;
-    print x
+    print match x with | -77 -> 100000 | _ -> x
+    
 done;
 print x
