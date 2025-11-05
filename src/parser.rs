@@ -77,6 +77,7 @@ pomelo! {
     call_expr ::= NotEquals atom_expr(arg1) atom_expr(arg2) { Expr::Call("!=".to_string(), vec![arg1, arg2]) }
     call_expr ::= Ampersand atom_expr(arg1) atom_expr(arg2) { Expr::Call("&".to_string(), vec![arg1, arg2]) }
     call_expr ::= Pipe atom_expr(arg1) atom_expr(arg2) { Expr::Call("|".to_string(), vec![arg1, arg2]) }
+    call_expr ::= Exclam atom_expr(arg) { Expr::Call("!".to_string(), vec![arg]) }
     call_expr ::= Identifier(func) atom_expr(arg) [Identifier] { Expr::Call(func, vec![arg]) }
     call_expr ::= atom_expr(e) [Identifier] { e }
 

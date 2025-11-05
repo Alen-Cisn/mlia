@@ -128,6 +128,8 @@ impl<'ctx> CodeGen<'ctx> {
                     self.compile_cmp(func_name, &args[0], &args[1])
                 } else if (func_name == "&" || func_name == "|") && args.len() == 2 {
                     self.compile_logical(func_name, &args[0], &args[1])
+                } else if func_name == "!" && args.len() == 1 {
+                    self.compile_not(&args[0])
                 } else {
                     Err("Unknown function call")
                 }
@@ -271,6 +273,14 @@ impl<'ctx> CodeGen<'ctx> {
         self.builder
             .build_int_z_extend(cmp_result, self.context.i64_type(), "cmp_ext")
             .map_err(|_| "Failed to extend comparison result")
+    }
+
+    fn compile_not(
+        &mut self,
+        arg: &Expr,
+    ) -> Result<IntValue<'ctx>, &'static str> {
+        let zero = Expr::Number(0);
+        self.compile_cmp("=", arg, &zero)
     }
 
     /// Compiles logical operators AND/OR

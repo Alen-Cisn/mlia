@@ -199,11 +199,13 @@ pub static KEYWORDS: std::sync::LazyLock<HashMap<&'static str, Token>> =
             ("*", Token::Star),
             ("/", Token::Slash),
             ("%", Token::Percent),
+            // Logical operators 
+            ("|", Token::Pipe),
+            ("&", Token::Ampersand),
+            ("!", Token::Exclam),
             // Other tokens
             ("->", Token::Arrow),
             ("<-", Token::Assign),
-            ("&", Token::Ampersand),
-            ("|", Token::Pipe),
             ("_", Token::Underscore),
             (";", Token::Semicolon),
             ("(", Token::ParenL),
