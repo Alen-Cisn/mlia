@@ -16,8 +16,8 @@ pub enum State {
     AssignOrIdentifier = 3,                // q3
     FinishAssignOrIdentifier = 4,          // q4
     Identifier = 5,                        // q5
-    FinishArrowOrIdentifier = 6,           // q6
-    ArrowOrIdentifierOrNegativeNumber = 7, // q7
+    ArrowOrIdentifierOrNegativeNumber = 6, // q6
+    FinishArrowOrIdentifier = 7,           // q7
     ParenLOrComment = 8,                   // q8
     Comment = 9,                           // q9
     MayFinishComment = 10,                 // q10
@@ -34,8 +34,8 @@ impl State {
             3 => Some(Self::AssignOrIdentifier),
             4 => Some(Self::FinishAssignOrIdentifier),
             5 => Some(Self::Identifier),
-            6 => Some(Self::FinishArrowOrIdentifier),
-            7 => Some(Self::ArrowOrIdentifierOrNegativeNumber),
+            6 => Some(Self::ArrowOrIdentifierOrNegativeNumber),
+            7 => Some(Self::FinishArrowOrIdentifier),
             8 => Some(Self::ParenLOrComment),
             9 => Some(Self::Comment),
             10 => Some(Self::MayFinishComment),
@@ -68,16 +68,17 @@ pub enum CharClass {
     Semicolon = 17,  // ;
     Whitespace = 18, // whitespace (including CR, LF, TAB)
     PunctGroup = 19, // {, }, [, ], ., :
+    Ampersand = 20,  // &
 }
 
 impl CharClass {
-    pub const COUNT: usize = 20;
+    pub const COUNT: usize = 21;
 }
 
 pub const fn classify_char(c: char) -> Option<CharClass> {
     use CharClass::{
         Caret, Digit, Equals, Exclam, Greater, LParen, Less, LowerAlpha, Minus, Percent, Pipe,
-        Plus, PunctGroup, RParen, Semicolon, Slash, Star, Underscore, UpperAlpha, Whitespace,
+        Plus, PunctGroup, RParen, Semicolon, Slash, Star, Underscore, UpperAlpha, Whitespace, Ampersand
     };
     match c {
         '0'..='9' => Some(Digit),
@@ -94,6 +95,7 @@ pub const fn classify_char(c: char) -> Option<CharClass> {
         '%' => Some(Percent),
         '^' => Some(Caret),
         '_' => Some(Underscore),
+        '&' => Some(Ampersand),
         '|' => Some(Pipe),
         '(' => Some(LParen),
         ')' => Some(RParen),
@@ -124,6 +126,7 @@ pub const fn is_identifier_char(c: char) -> bool {
         | '%'
         | '^'
         | '_'
+        | '&'
         | '|' => true,
         '(' | ')' | ';' | '{' | '}' | '[' | ']' | '.' | ':' => false,
         _ if c.is_whitespace() => false,
@@ -137,47 +140,29 @@ pub const NUM_CLASSES: usize = CharClass::COUNT;
 // -1 means no valid transition from that state with that char class
 pub const STATE_TRANSITIONS: [[i8; NUM_CLASSES]; NUM_STATES] = [
     // q0 (Start)
-    [1, 5, 3, 3, 7, 7, 5, 5, 5, 5, 5, 5, 5, 2, 2, 8, 11, 0, 0, -1],
+    [1, 5, 5, 3, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 2, 8, 11, 0, 0, -1, 5],
     // q1 (Digit)
-    [
-        1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -1, -1, -1, -1, -1, -1,
-    ],
+    [1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -1, -1, -1, -1, -1, -1, -2],
     // q2 (PipeOrIdentifier)
-    [
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
-    ],
+    [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1, 5],
     // q3 (AssignOrIdentifier)
-    [
-        5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
-    ],
+    [5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1, 5],
     // q4 (FinishAssignOrIdentifier)
-    [
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
-    ],
+    [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1, 5],
     // q5 (Identifier)
-    [
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
-    ],
-    // q6 (FinishArrowOrIdentifier)
-    [
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
-    ],
-    // q7 (ArrowOrIdentifier)
-    [
-        1, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1,
-    ],
+    [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1, 5],
+    // q6 (ArrowIdentifierOrNegativeNumber)
+    [1, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1, 5],
+    // q7 (FinishArrowOrIdentifier)
+    [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, -1, -1, -1, -1, -1, -1, 5],
     // q8 (ParenLOrComment)
-    [
-        -1, -1, -1, -1, -1, -1, -1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    ],
+    [-1, -1, -1, -1, -1, -1, -1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
     // q9 (Comment)
-    [9, 9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+    [9, 9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
     // q10 (MayFinishComment)
-    [9, 9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9, 9, 9, 9, 0, 9, 9, 9],
+    [9, 9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9, 9, 9, 9, 0, 9, 9, 9, 9],
     // q11 (ParenR)
-    [
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    ],
+    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
 ];
 
 pub fn next_state(current: State, class: CharClass) -> Result<Option<State>, String> {
@@ -461,6 +446,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_emit_semicolon,     // ;
         action_noop,               // whitespace
         action_noop,               // { } [ ] . :
+        action_start_lexeme,       // &
     ],
     // q1 (Digit)
     [
@@ -484,6 +470,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,          // ;
         action_noop,          // whitespace
         action_noop,          // punct group
+        action_noop,          // &
     ],
     // q2 (PipeOrIdentifier)
     [
@@ -507,6 +494,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,          // ;
         action_noop,          // whitespace
         action_noop,          // punct group
+        action_append_lexeme, // &
     ],
     // q3 (AssignOrIdentifier)
     [
@@ -530,6 +518,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,                         // ;
         action_noop,                         // whitespace
         action_noop,                         // punct group
+        action_append_lexeme,                // &
     ],
     // q4 (FinishAssignOrIdentifier)
     [
@@ -553,6 +542,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,          // ;
         action_noop,          // whitespace
         action_noop,          // punct group
+        action_append_lexeme, // &
     ],
     // q5 (Identifier)
     [
@@ -576,6 +566,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,          // ;
         action_noop,          // whitespace
         action_noop,          // punct group
+        action_append_lexeme, // &
     ],
     // q6 (FinishArrowOrIdentifier)
     [
@@ -599,6 +590,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,          // ;
         action_noop,          // whitespace
         action_noop,          // punct group
+        action_append_lexeme, // &
     ],
     // q7 (ArrowOrIdentifier)
     [
@@ -622,6 +614,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,                        // ;
         action_noop,                        // whitespace
         action_noop,                        // punct group
+        action_append_lexeme,               // &
     ],
     // q8 (ParenLOrComment)
     [
@@ -645,6 +638,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,          // ;
         action_noop,          // whitespace
         action_noop,          // punct group
+        action_noop,          // &
     ],
     // q9 (Comment)
     [
@@ -668,6 +662,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop, // ;
         action_noop, // whitespace
         action_noop, // punct group
+        action_noop, // &
     ],
     // q10 (MayFinishComment)
     [
@@ -691,6 +686,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop,        // ;
         action_noop,        // whitespace
         action_noop,        // punct group
+        action_noop,        // &
     ],
     // q11 (ParenR)
     [
@@ -714,6 +710,7 @@ pub static TRANSITION_ACTIONS: [[TransitionAction; NUM_CLASSES]; NUM_STATES] = [
         action_noop, // ;
         action_noop, // whitespace
         action_noop, // punct group
+        action_noop, // &
     ],
 ];
 
