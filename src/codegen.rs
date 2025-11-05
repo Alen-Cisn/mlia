@@ -126,6 +126,8 @@ impl<'ctx> CodeGen<'ctx> {
                     && args.len() == 2
                 {
                     self.compile_cmp(func_name, &args[0], &args[1])
+                } else if (func_name == "&" || func_name == "|") && args.len() == 2 {
+                    self.compile_logical(func_name, &args[0], &args[1])
                 } else {
                     Err("Unknown function call")
                 }
@@ -269,6 +271,59 @@ impl<'ctx> CodeGen<'ctx> {
         self.builder
             .build_int_z_extend(cmp_result, self.context.i64_type(), "cmp_ext")
             .map_err(|_| "Failed to extend comparison result")
+    }
+
+    /// Compiles logical operators AND/OR
+    /// Normalize args to {0,1}
+    fn compile_logical(
+        &mut self,
+        op: &str,
+        lhs: &Expr,
+        rhs: &Expr,
+    ) -> Result<IntValue<'ctx>, &'static str> {
+        use inkwell::IntPredicate;
+
+        let lhs_val = self.compile_expr(lhs)?;
+        let rhs_val = self.compile_expr(rhs)?;
+
+        // Normalize left!=0 -> 1
+        let left = self.builder.build_int_compare(
+            IntPredicate::NE,
+            lhs_val,
+            self.context.i64_type().const_int(0,false),
+            "left",
+        ).map_err(|_| "builder error")?;
+
+        //Normalize right!=0 -> 1
+        let right = self.builder.build_int_compare(
+            IntPredicate::NE,
+            rhs_val,
+            self.context.i64_type().const_int(0,false),
+            "right",
+        ).map_err(|_| "builder error")?;
+
+        let result = match op{
+            "&" => {
+                // AND
+                self.builder
+                    .build_and(left, right, "and_tmp")
+                    .map_err(|_| "builder error")?
+            }
+            "|" => {
+                // OR
+                self.builder
+                    .build_or(left, right, "or_tmp")
+                    .map_err(|_| "builder error")?
+            }
+            _ => return Err("Invalid logical operator"),
+        };
+
+        // Convert i1 (bool) to i64: true -> 1, false -> 0
+        let result_i64 = self.builder
+                        .build_int_z_extend(result, self.context.i64_type(), "bool_to_i64")
+                        .map_err(|_| "builder error")?;
+
+        Ok(result_i64)
     }
 
     /// Compiles while loops using the standard three-block pattern.
