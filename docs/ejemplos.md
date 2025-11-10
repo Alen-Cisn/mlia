@@ -26,4 +26,72 @@ while < variable otraVariable do
 done
 
 1
+
+(* Ejemplo de operador AND *)
+decl x <- 5 in
+decl y <- 10 in
+decl z <- 3 in
+
+print (& (< x y) (> x z));
+
+0
+
+(* Ejemplo de combinacion AND/OR *)
+
+print (| (| (& 1 1) (& 1 0)) (| (& 0 0) (& 0 1)));
+
+0
+
+(* Ejemplo funcion con match y 3 argumentos *)
+decl fun a b c <- (+ (+ a b) (match (% c 2) with
+    | 0 -> -20
+    | _ -> 10)
+) in
+print (fun 6 5 5);
+0
+
+(* Ejemplo funciones anidadas *)
+decl fn1 a b <- + a b in
+decl fn2 c d <- 
+    decl fn3 f g <- (fn1 (fn1 f g) 1) in
+    (fn3 c d)
+in
+print (fn2 3 4);
+0
+
+(* Ejemplo fibonacci: imprime los primeros n numeros de la sucesion *)
+decl fib n <- 
+    match n with
+    | 0 -> 0
+    | 1 -> 1
+    | _ -> + (fib (- n 1)) (fib (- n 2))
+in
+decl printFibSeries i n <-
+    match > i n with
+    | 1 -> 0
+    | _ -> 
+        print (fib i);
+        (printFibSeries (+ i 1) n)
+in
+(printFibSeries 0 10);
+0
+
+(* Ejemplo fibonacci 2: imprime los numeros de la sucesion menores a n *)
+decl fib n <- 
+    match n with
+    | 0 -> 0
+    | 1 -> 1
+    | _ -> + (fib (- n 1)) (fib (- n 2))
+in
+decl printFibUpTo i n <-
+    decl fibValue <- (fib i) in
+    match > fibValue n with
+    | 1 -> 0
+    | _ -> 
+        print fibValue;
+        (printFibUpTo (+ i 1) n)
+in
+(printFibUpTo 0 100);
+0
+
 ```
