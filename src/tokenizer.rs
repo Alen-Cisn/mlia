@@ -212,7 +212,7 @@ pub static KEYWORDS: std::sync::LazyLock<HashMap<&'static str, Token>> =
             (")", Token::ParenR),
         ];
         let mut m: HashMap<&'static str, Token> = HashMap::new();
-        for &(k, ref v) in KEYWORDS {
+        for (k, v) in KEYWORDS {
             m.insert(k, v.clone());
         }
         m

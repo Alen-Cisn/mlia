@@ -35,6 +35,8 @@ pub struct CodeGen<'ctx> {
 
     /// Print function for output operations
     print_function: Option<FunctionValue<'ctx>>,
+
+    user_functions: HashMap<String, FunctionValue<'ctx>>,
 }
 
 impl<'ctx> CodeGen<'ctx> {
@@ -50,13 +52,13 @@ impl<'ctx> CodeGen<'ctx> {
             builder,
             execution_engine,
             variables: HashMap::new(),
+            user_functions: HashMap::new(), // Inicializar tabla de funciones
             current_function: None,
             print_function: None,
         };
 
         // Declare external print function
         codegen.declare_print_function();
-
         Ok(codegen)
     }
 
@@ -131,7 +133,8 @@ impl<'ctx> CodeGen<'ctx> {
                 } else if func_name == "!" && args.len() == 1 {
                     self.compile_not(&args[0])
                 } else {
-                    Err("Unknown function call")
+                    // User-defined function
+                    self.compile_user_function_call(func_name, args)
                 }
             }
 
@@ -154,33 +157,37 @@ impl<'ctx> CodeGen<'ctx> {
                 }
             }
 
-            Expr::Decl(var_name, _params, value, body) => {
-                // For now, ignore function parameters (they're empty in our current use case)
-                let val = self.compile_expr(value)?;
+            Expr::Decl(var_name, params, value, body) => {
+                if params.is_empty() {
+                    let val = self.compile_expr(value)?;
 
-                // Create stack allocation for the variable
-                let alloca = self.create_entry_block_alloca(var_name);
+                    // Create stack allocation for the variable
+                    let alloca = self.create_entry_block_alloca(var_name);
 
-                // Store the initial value
-                self.builder.build_store(alloca, val).unwrap();
+                    // Store the initial value
+                    self.builder.build_store(alloca, val).unwrap();
 
-                // Save old variable binding if it exists
-                let old_binding = self.variables.insert(var_name.clone(), alloca);
+                    // Save old variable binding if it exists
+                    let old_binding = self.variables.insert(var_name.clone(), alloca);
 
-                // Compile the body with the new variable in scope
-                let result = self.compile_expr(body);
+                    // Compile the body with the new variable in scope
+                    let result = self.compile_expr(body);
 
-                // Restore old binding or remove the variable
-                match old_binding {
-                    Some(old_var) => {
-                        self.variables.insert(var_name.clone(), old_var);
+                    // Restore old binding or remove the variable
+                    match old_binding {
+                        Some(old_var) => {
+                            self.variables.insert(var_name.clone(), old_var);
+                        }
+                        None => {
+                            self.variables.remove(var_name);
+                        }
                     }
-                    None => {
-                        self.variables.remove(var_name);
-                    }
-                }
+                    result
 
-                result
+                } else {
+                    // User-defined Function Declaration
+                    self.compile_function_decl(var_name, params, value, body)
+                }    
             }
 
             // Implement While loop codegen (T034-T037)
@@ -334,6 +341,115 @@ impl<'ctx> CodeGen<'ctx> {
                         .map_err(|_| "builder error")?;
 
         Ok(result_i64)
+    }
+
+    /// Compile user-defined function declaration
+    fn compile_function_decl(
+        &mut self,
+        func_name: &str,
+        params: &[String],
+        body: &Expr,
+        continuation: &Expr,
+    ) -> Result<IntValue<'ctx>, &'static str> {
+        // Create function type: i64 (i64, i64, ...)
+        let i64_type = self.context.i64_type();
+        let param_types: Vec<_> = params.iter()
+            .map(|_| i64_type.into())
+            .collect();
+        let fn_type = i64_type.fn_type(&param_types, false);
+
+        // Create LLVM function
+        let function = self.module.add_function(func_name, fn_type, None);
+        
+        // Register function before compile body
+        self.user_functions.insert(func_name.to_string(), function);
+        
+        // Save current context
+        let parent_function = self.current_function;
+        let old_variables = self.variables.clone();
+        
+        // Set new context
+        self.current_function = Some(function);
+        self.variables.clear();
+        
+        // Create entry block
+        let entry_block = self.context.append_basic_block(function, "entry");
+        self.builder.position_at_end(entry_block);
+
+        // Create allocas for parameters and store values
+        for (i, param_name) in params.iter().enumerate() {
+            let param_value = function.get_nth_param(i as u32)
+                .ok_or("Failed to get parameter")?
+                .into_int_value();
+            
+            let alloca = self.create_entry_block_alloca(param_name);
+            self.builder.build_store(alloca, param_value)
+                .map_err(|_| "Failed to store parameter")?;
+            
+            self.variables.insert(param_name.clone(), alloca);
+        }
+
+        // Compile function body(value)
+        let result = self.compile_expr(body)?;
+        
+        // Return result
+        self.builder.build_return(Some(&result))
+            .map_err(|_| "Failed to build return")?;
+
+        // Verify function
+        if !function.verify(true) {
+            return Err("Function verification failed");
+        }
+
+        // Restore previous context
+        self.current_function = parent_function;
+        self.variables = old_variables;
+        
+        // Reposition builder in parent context
+        if let Some(parent_fn) = parent_function {
+            let last_block = parent_fn.get_last_basic_block()
+                .ok_or("No basic block in parent function")?;
+            self.builder.position_at_end(last_block);
+        }
+
+        // Compile continuation(body)
+        self.compile_expr(continuation)
+    }
+
+    /// Compile a user-defined function call
+    fn compile_user_function_call(
+        &mut self,
+        func_name: &str,
+        args: &[Expr],
+    ) -> Result<IntValue<'ctx>, &'static str> {
+        // Look up function in table and clone to avoid borrowing conflicts
+        let function = *self.user_functions.get(func_name)
+            .ok_or("Undefined function")?;
+
+        // Verify number of arguments
+        if args.len() != function.count_params() as usize {
+            return Err("Wrong number of arguments");
+        }
+
+        // Compile arguments
+        let mut arg_values = Vec::new();
+        for arg in args {
+            let val = self.compile_expr(arg)?;
+            arg_values.push(val.into());
+        }
+
+        // Create function call
+        let call_site = self.builder
+            .build_call(function, &arg_values, "call")
+            .map_err(|_| "Failed to build call")?;
+
+        // Get return value
+        let result = call_site.try_as_basic_value()
+            .left()
+            .ok_or("Function call did not return a value")?
+            .into_int_value();
+
+        Ok(result)
     }
 
     /// Compiles while loops using the standard three-block pattern.

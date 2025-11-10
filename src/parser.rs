@@ -43,6 +43,8 @@ pomelo! {
     %type program Expr;
     %type pattern Pattern;
     %type match_arms Vec<(Pattern, Expr)>;
+    %type param_list Vec<String>;
+    %type arg_list Vec<Expr>;
 
     // Start symbol
     %start_symbol program;
@@ -51,10 +53,21 @@ pomelo! {
     program ::= expr(e) { e }
 
     // Declaration expressions (lowest precedence - captures everything after In)
-    expr ::= Decl Identifier(var) Assign assign_expr(val) In expr(body) {
+    expr ::= Decl Identifier(var) Assign expr(val) In expr(body) {
         Expr::Decl(var, vec![], Box::new(val), Box::new(body))
     }
+    expr ::= Decl Identifier(var) param_list(params) Assign expr(val) In expr(body) {
+        Expr::Decl(var, params, Box::new(val), Box::new(body))
+    }
     expr ::= seq_expr(e) { e }
+
+    param_list ::= Identifier(param) { 
+        vec![param]
+    }
+    param_list ::= param_list(mut list) Identifier(param) { 
+        list.push(param); 
+        list 
+    }
 
     // Sequence expressions - make semicolon right-associative to avoid conflict
     seq_expr ::= assign_expr(first) Semicolon seq_expr(second) { Expr::Seq(Box::new(first), Box::new(second)) }
@@ -78,12 +91,20 @@ pomelo! {
     call_expr ::= Ampersand atom_expr(arg1) atom_expr(arg2) { Expr::Call("&".to_string(), vec![arg1, arg2]) }
     call_expr ::= Pipe atom_expr(arg1) atom_expr(arg2) { Expr::Call("|".to_string(), vec![arg1, arg2]) }
     call_expr ::= Exclam atom_expr(arg) { Expr::Call("!".to_string(), vec![arg]) }
-    call_expr ::= Identifier(func) atom_expr(arg) [Identifier] { Expr::Call(func, vec![arg]) }
-    call_expr ::= atom_expr(e) [Identifier] { e }
+    call_expr ::= atom_expr(e) { e }
+    
+    arg_list ::= atom_expr(arg) { 
+        vec![arg]
+    }
+    arg_list ::= arg_list(mut list) atom_expr(arg) { 
+        list.push(arg); 
+        list 
+    }
 
     // Atomic expressions (highest precedence)
     atom_expr ::= IntegerLiteral(n) { Expr::Number(n) }
     atom_expr ::= Identifier(id) { Expr::Ident(id) }
+    atom_expr ::= ParenL Identifier(func) arg_list(args) ParenR { Expr::Call(func, args) }
     atom_expr ::= ParenL expr(e) ParenR { e }
 
     // While loop
