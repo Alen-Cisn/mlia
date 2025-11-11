@@ -8,7 +8,7 @@ use inkwell::targets::{
     CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine,
 };
 use inkwell::values::{FunctionValue, IntValue, PointerValue};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fs;
 use std::path::Path;
@@ -36,7 +36,9 @@ pub struct CodeGen<'ctx> {
     /// Print function for output operations
     print_function: Option<FunctionValue<'ctx>>,
 
-    user_functions: HashMap<String, FunctionValue<'ctx>>,
+    /// User-defined functions with their captured variables
+    /// Maps function name to (LLVM function, list of captured variable names)
+    user_functions: HashMap<String, (FunctionValue<'ctx>, Vec<String>)>,
 }
 
 impl<'ctx> CodeGen<'ctx> {
@@ -343,6 +345,61 @@ impl<'ctx> CodeGen<'ctx> {
         Ok(result_i64)
     }
 
+    /// Find free variables in an expression
+    /// Free variables are identifiers that are used but not defined in the current scope
+    fn find_free_variables(&self, expr: &Expr, bound: &HashSet<String>) -> HashSet<String> {
+        let mut free = HashSet::new();
+        match expr {
+            Expr::Number(_) => {},
+            Expr::Ident(name) => {
+                if !bound.contains(name) {
+                    free.insert(name.clone());
+                }
+            },
+            Expr::Call(func, args) => {
+                // Don't treat function name as free variable
+                for arg in args {
+                    free.extend(self.find_free_variables(arg, bound));
+                }
+            },
+            Expr::Seq(first, second) => {
+                free.extend(self.find_free_variables(first, bound));
+                free.extend(self.find_free_variables(second, bound));
+            },
+            Expr::Assign(var, value) => {
+                free.extend(self.find_free_variables(value, bound));
+                // Assignment doesn't bind, it just mutates
+                if !bound.contains(var) {
+                    free.insert(var.clone());
+                }
+            },
+            Expr::Decl(var, params, value, body) => {
+                // Variables in 'value' can only see outer scope
+                free.extend(self.find_free_variables(value, bound));
+                
+                // Variables in 'body' can see var and params
+                let mut inner_bound = bound.clone();
+                inner_bound.insert(var.clone());
+                for param in params {
+                    inner_bound.insert(param.clone());
+                }
+                free.extend(self.find_free_variables(body, &inner_bound));
+            },
+            Expr::While(cond, body) => {
+                free.extend(self.find_free_variables(cond, bound));
+                free.extend(self.find_free_variables(body, bound));
+            },
+            Expr::Match(scrutinee, arms) => {
+                free.extend(self.find_free_variables(scrutinee, bound));
+                for (_pattern, arm_expr) in arms {
+                    // Pattern matching doesn't bind variables in MLIA (only literals and wildcards)
+                    free.extend(self.find_free_variables(arm_expr, bound));
+                }
+            },
+        }
+        free
+    }
+
     /// Compile user-defined function declaration
     fn compile_function_decl(
         &mut self,
@@ -351,18 +408,36 @@ impl<'ctx> CodeGen<'ctx> {
         body: &Expr,
         continuation: &Expr,
     ) -> Result<IntValue<'ctx>, &'static str> {
-        // Create function type: i64 (i64, i64, ...)
+        // Find free variables in the function body
+        let mut bound = HashSet::new();
+        for param in params {
+            bound.insert(param.clone());
+        }
+        let free_vars = self.find_free_variables(body, &bound);
+        
+        // Filter free variables to only those currently in scope
+        let captured_vars: Vec<String> = free_vars.iter()
+            .filter(|var| self.variables.contains_key(*var))
+            .cloned()
+            .collect();
+        
+        // Create function type with extra parameters for captured variables
+        // i64 (i64, i64, ..., captured1, captured2, ...)
         let i64_type = self.context.i64_type();
-        let param_types: Vec<_> = params.iter()
+        let mut param_types: Vec<_> = params.iter()
             .map(|_| i64_type.into())
             .collect();
+        // Add types for captured variables
+        for _ in &captured_vars {
+            param_types.push(i64_type.into());
+        }
         let fn_type = i64_type.fn_type(&param_types, false);
 
         // Create LLVM function
         let function = self.module.add_function(func_name, fn_type, None);
         
-        // Register function before compile body
-        self.user_functions.insert(func_name.to_string(), function);
+        // Register function with its captured variables before compiling body
+        self.user_functions.insert(func_name.to_string(), (function, captured_vars.clone()));
         
         // Save current context
         let parent_function = self.current_function;
@@ -376,7 +451,7 @@ impl<'ctx> CodeGen<'ctx> {
         let entry_block = self.context.append_basic_block(function, "entry");
         self.builder.position_at_end(entry_block);
 
-        // Create allocas for parameters and store values
+        // Create allocas for explicit parameters and store values
         for (i, param_name) in params.iter().enumerate() {
             let param_value = function.get_nth_param(i as u32)
                 .ok_or("Failed to get parameter")?
@@ -388,8 +463,22 @@ impl<'ctx> CodeGen<'ctx> {
             
             self.variables.insert(param_name.clone(), alloca);
         }
+        
+        // Create allocas for captured variables (hidden parameters)
+        for (i, var_name) in captured_vars.iter().enumerate() {
+            let param_idx = (params.len() + i) as u32;
+            let param_value = function.get_nth_param(param_idx)
+                .ok_or("Failed to get captured variable parameter")?
+                .into_int_value();
+            
+            let alloca = self.create_entry_block_alloca(var_name);
+            self.builder.build_store(alloca, param_value)
+                .map_err(|_| "Failed to store captured variable")?;
+            
+            self.variables.insert(var_name.clone(), alloca);
+        }
 
-        // Compile function body(value)
+        // Compile function body
         let result = self.compile_expr(body)?;
         
         // Return result
@@ -412,7 +501,7 @@ impl<'ctx> CodeGen<'ctx> {
             self.builder.position_at_end(last_block);
         }
 
-        // Compile continuation(body)
+        // Compile continuation
         self.compile_expr(continuation)
     }
 
@@ -422,19 +511,32 @@ impl<'ctx> CodeGen<'ctx> {
         func_name: &str,
         args: &[Expr],
     ) -> Result<IntValue<'ctx>, &'static str> {
-        // Look up function in table and clone to avoid borrowing conflicts
-        let function = *self.user_functions.get(func_name)
+        // Look up function and captured variables
+        let (function, captured_vars) = self.user_functions.get(func_name)
             .ok_or("Undefined function")?;
+        let function = *function; // Dereference to copy FunctionValue
+        let captured_vars = captured_vars.clone(); // Clone the vector
 
-        // Verify number of arguments
-        if args.len() != function.count_params() as usize {
+        // Verify number of user-provided arguments (not including captured variables)
+        let expected_args = function.count_params() as usize - captured_vars.len();
+        if args.len() != expected_args {
             return Err("Wrong number of arguments");
         }
 
-        // Compile arguments
+        // Compile user-provided arguments
         let mut arg_values = Vec::new();
         for arg in args {
             let val = self.compile_expr(arg)?;
+            arg_values.push(val.into());
+        }
+        
+        // Add captured variables as extra arguments
+        for var_name in &captured_vars {
+            let var_ptr = self.variables.get(var_name)
+                .ok_or("Captured variable not in scope")?;
+            let val = self.builder.build_load(self.context.i64_type(), *var_ptr, var_name)
+                .map_err(|_| "Failed to load captured variable")?
+                .into_int_value();
             arg_values.push(val.into());
         }
 

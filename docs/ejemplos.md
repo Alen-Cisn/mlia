@@ -94,4 +94,20 @@ in
 (printFibUpTo 0 100);
 0
 
+(* Ejemplo Closure simple *)
+decl x <- 5 in
+decl fun n <- + n x in
+print (fun 10);
+0
+
+(* Ejemplo nested closures *)
+decl x <- 10 in
+decl y <- 20 in
+decl outer a <- 
+    decl inner b <- + (+ a b) (+ x y) in
+    (inner 5)
+in
+print (outer 3);
+0
+
 ```
