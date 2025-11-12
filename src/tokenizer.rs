@@ -261,7 +261,7 @@ impl Lexer {
                     c, self.line, self.column
                 ));
             };
-            println!("Estado: {state:?}, Char: '{c}', Clase: {class:?} -> ");
+            //println!("Estado: {state:?}, Char: '{c}', Clase: {class:?} -> ");
 
             let next = next_state(state, class);
 

@@ -837,6 +837,11 @@ impl<'ctx> CodeGen<'ctx> {
     pub fn print_ir(&self) {
         self.module.print_to_stderr();
     }
+
+    /// Get the LLVM IR as a string
+    pub fn get_ir_string(&self) -> String {
+        self.module.print_to_string().to_string()
+    }
 }
 
 #[cfg(test)]

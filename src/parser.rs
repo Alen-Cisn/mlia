@@ -153,6 +153,29 @@ pub fn parse_program(input: String) -> Result<Expr, String> {
     parser.end_of_input().map_err(|e| format!("Parse error at end of input: {:?}", e))
 }
 
+/// Parse program with verbose output: returns (AST, tokens)
+pub fn parse_program_verbose(input: String) -> Result<(Expr, Vec<Token>), String> {
+    use crate::tokenizer::Lexer;
+    
+    // Tokenize the input
+    let mut lexer = Lexer::new(input);
+    let tokens = lexer.tokenize().map_err(|e| format!("Tokenization error: {}", e))?;
+    
+    // Clone tokens for verbose output
+    let tokens_for_output = tokens.clone();
+    
+    // Parse the tokens
+    let mut parser = parser::Parser::new();
+    for token in tokens {
+        parser.parse(token).map_err(|e| format!("Parse error: {:?}", e))?;
+    }
+    
+    // Finish parsing and return the AST with tokens
+    let ast = parser.end_of_input().map_err(|e| format!("Parse error at end of input: {:?}", e))?;
+    
+    Ok((ast, tokens_for_output))
+}
+
 #[cfg(test)]
 mod tests {
     use super::parser::*;
