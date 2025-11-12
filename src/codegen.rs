@@ -109,7 +109,10 @@ impl<'ctx> CodeGen<'ctx> {
 
             Expr::Ident(name) => match self.variables.get(name) {
                 Some(var) => Ok(self.build_load(*var, name)),
-                None => Err("Undefined variable"),
+                None => {
+                    eprintln!("Warning: undefined variable '{}' used. Value will be 0.", name);
+                    Ok(self.context.i64_type().const_zero())
+                },
             },
 
             Expr::Call(func_name, args) => {
