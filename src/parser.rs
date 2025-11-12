@@ -70,7 +70,8 @@ pomelo! {
     }
 
     // Sequence expressions - make semicolon right-associative to avoid conflict
-    seq_expr ::= assign_expr(first) Semicolon seq_expr(second) { Expr::Seq(Box::new(first), Box::new(second)) }
+    // Allow any expr (including declarations) in sequences
+    seq_expr ::= assign_expr(first) Semicolon expr(second) { Expr::Seq(Box::new(first), Box::new(second)) }
     seq_expr ::= assign_expr(e) [Semicolon] { e }
 
     // Assignment expressions

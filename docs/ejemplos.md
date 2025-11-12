@@ -110,4 +110,13 @@ in
 print (outer 3);
 0
 
+(* Ejemplo secuencia de prints con decls *)
+print 1;
+print 2;
+decl x <- 10 in
+print x;
+decl y <- 20 in
+print (+ x y);
+print 3
+
 ```
